@@ -1,0 +1,48 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Règles pour la collection users
+    match /users/{userId} {
+      // Un utilisateur peut lire et écrire uniquement ses propres données
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Règles pour la collection subjects
+    match /subjects/{subjectId} {
+      // Un utilisateur peut lire ses matières
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      
+      // Un utilisateur peut créer une matière
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      
+      // Un utilisateur peut modifier/supprimer ses propres matières
+      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+    
+    // Règles pour la collection tasks
+    match /tasks/{taskId} {
+      // Un utilisateur peut lire ses tâches
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      
+      // Un utilisateur peut créer une tâche
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      
+      // Un utilisateur peut modifier/supprimer ses propres tâches
+      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+    
+    // Règles pour la collection focusSessions
+    match /focusSessions/{sessionId} {
+      // Un utilisateur peut lire ses sessions
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      
+      // Un utilisateur peut créer une session
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      
+      // Un utilisateur peut modifier/supprimer ses propres sessions
+      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+  }
+}
