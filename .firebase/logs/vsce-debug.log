@@ -1,0 +1,64 @@
+[debug] [2026-03-16T02:20:06.076Z] [Firebase Plugin] Activating Firebase extension.
+[info] [Firebase Plugin] Unable to check firebase-tools installation: TypeError: terminated
+[debug] [2026-03-16T02:21:18.186Z] [Firebase Plugin] requireAuthWrapper
+[debug] [2026-03-16T02:21:18.189Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-16T02:21:18.244Z] [Firebase Plugin] VSCode notification server listening on port 40001
+[error] [Firebase Plugin] requireAuth error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.
+[info] [Firebase Plugin] Starting Data Connect toolkit (version 3.2.1) on port 50001
+[info] i  dataconnect: downloading dataconnect-emulator-3.2.1.exe... {"metadata":{"emulator":{"name":"dataconnect"},"message":"downloading dataconnect-emulator-3.2.1.exe..."}}
+[debug] [2026-03-16T02:21:19.075Z] >>> [apiv2][query] GET https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-windows-amd64-v3.2.1 
+[debug] [2026-03-16T02:21:24.440Z] *** [apiv2] error from fetch(https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-windows-amd64-v3.2.1, {"headers":{},"method":"GET"}): FetchError: request to https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-windows-amd64-v3.2.1 failed, reason: getaddrinfo ENOTFOUND storage.googleapis.com
+[debug] [2026-03-16T02:21:24.441Z] 'fdc build' failed with error: Failed to make request to https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-windows-amd64-v3.2.1 {"metadata":{"emulator":{"name":"dataconnect"},"message":"'fdc build' failed with error: Failed to make request to https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-windows-amd64-v3.2.1"}}
+[warn] !  Setup required, please run: firebase setup:emulators:dataconnect 
+[info] [Firebase Plugin] Stopping Data Connect toolkit
+[debug] [2026-03-16T09:42:35.993Z] [Firebase Plugin] Activating Firebase extension.
+[info] [Firebase Plugin] Unable to check firebase-tools installation: TypeError: fetch failed
+[debug] [2026-03-16T09:42:38.078Z] [Firebase Plugin] requireAuthWrapper
+[debug] [2026-03-16T09:42:38.082Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-16T09:42:38.325Z] [Firebase Plugin] VSCode notification server listening on port 40001
+[error] [Firebase Plugin] requireAuth error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.
+[info] [Firebase Plugin] Starting Data Connect toolkit (version 3.2.1) on port 50001
+[info] i  dataconnect: downloading dataconnect-emulator-3.2.1.exe... {"metadata":{"emulator":{"name":"dataconnect"},"message":"downloading dataconnect-emulator-3.2.1.exe..."}}
+[debug] [2026-03-16T09:42:42.600Z] >>> [apiv2][query] GET https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-windows-amd64-v3.2.1 
+[debug] [2026-03-16T09:42:45.916Z] *** [apiv2] error from fetch(https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-windows-amd64-v3.2.1, {"headers":{},"method":"GET"}): FetchError: request to https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-windows-amd64-v3.2.1 failed, reason: getaddrinfo ENOTFOUND storage.googleapis.com
+[debug] [2026-03-16T09:42:45.917Z] 'fdc build' failed with error: Failed to make request to https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-windows-amd64-v3.2.1 {"metadata":{"emulator":{"name":"dataconnect"},"message":"'fdc build' failed with error: Failed to make request to https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-windows-amd64-v3.2.1"}}
+[warn] !  Setup required, please run: firebase setup:emulators:dataconnect 
+[info] [Firebase Plugin] Stopping Data Connect toolkit
+[debug] [2026-03-16T20:34:09.308Z] [Firebase Plugin] Activating Firebase extension.
+[info] [Firebase Plugin] Unable to check firebase-tools installation: TypeError: fetch failed
+[debug] [2026-03-16T20:34:22.998Z] [Firebase Plugin] requireAuthWrapper
+[debug] [2026-03-16T20:34:23.001Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-16T20:34:23.184Z] [Firebase Plugin] VSCode notification server listening on port 40001
+[error] [Firebase Plugin] requireAuth error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.
+[info] [Firebase Plugin] Starting Data Connect toolkit (version 3.2.1) on port 50001
+[info] i  dataconnect: downloading dataconnect-emulator-3.2.1.exe... {"metadata":{"emulator":{"name":"dataconnect"},"message":"downloading dataconnect-emulator-3.2.1.exe..."}}
+[debug] [2026-03-16T20:34:26.107Z] >>> [apiv2][query] GET https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-windows-amd64-v3.2.1 
+[debug] [2026-03-16T20:34:49.632Z] *** [apiv2] error from fetch(https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-windows-amd64-v3.2.1, {"headers":{},"method":"GET"}): FetchError: request to https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-windows-amd64-v3.2.1 failed, reason: 
+[debug] [2026-03-16T20:34:49.633Z] 'fdc build' failed with error: Failed to make request to https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-windows-amd64-v3.2.1 {"metadata":{"emulator":{"name":"dataconnect"},"message":"'fdc build' failed with error: Failed to make request to https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-windows-amd64-v3.2.1"}}
+[warn] !  Setup required, please run: firebase setup:emulators:dataconnect 
+[debug] [2026-03-18T15:54:18.603Z] [Firebase Plugin] Activating Firebase extension.
+[info] [Firebase Plugin] Unable to check firebase-tools installation: TypeError: fetch failed
+[debug] [2026-03-18T15:54:19.631Z] [Firebase Plugin] requireAuthWrapper
+[debug] [2026-03-18T15:54:19.635Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-18T15:54:19.677Z] [Firebase Plugin] VSCode notification server listening on port 40001
+[error] [Firebase Plugin] requireAuth error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.
+[info] [Firebase Plugin] Starting Data Connect toolkit (version 3.2.1) on port 50001
+[info] i  dataconnect: downloading dataconnect-emulator-3.2.1.exe... {"metadata":{"emulator":{"name":"dataconnect"},"message":"downloading dataconnect-emulator-3.2.1.exe..."}}
+[debug] [2026-03-18T15:54:20.720Z] >>> [apiv2][query] GET https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-windows-amd64-v3.2.1 
+[debug] [2026-03-18T15:54:20.986Z] *** [apiv2] error from fetch(https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-windows-amd64-v3.2.1, {"headers":{},"method":"GET"}): FetchError: request to https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-windows-amd64-v3.2.1 failed, reason: getaddrinfo ENOTFOUND storage.googleapis.com
+[debug] [2026-03-18T15:54:20.988Z] 'fdc build' failed with error: Failed to make request to https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-windows-amd64-v3.2.1 {"metadata":{"emulator":{"name":"dataconnect"},"message":"'fdc build' failed with error: Failed to make request to https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-windows-amd64-v3.2.1"}}
+[warn] !  Setup required, please run: firebase setup:emulators:dataconnect 
+[info] [Firebase Plugin] Stopping Data Connect toolkit
+[debug] [2026-03-18T18:44:54.945Z] [Firebase Plugin] Activating Firebase extension.
+[info] [Firebase Plugin] Unable to check firebase-tools installation: TypeError: fetch failed
+[debug] [2026-03-18T18:45:05.976Z] [Firebase Plugin] requireAuthWrapper
+[debug] [2026-03-18T18:45:05.978Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-18T18:45:06.059Z] [Firebase Plugin] VSCode notification server listening on port 40001
+[error] [Firebase Plugin] requireAuth error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.
+[info] [Firebase Plugin] Starting Data Connect toolkit (version 3.2.1) on port 50001
+[info] i  dataconnect: downloading dataconnect-emulator-3.2.1.exe... {"metadata":{"emulator":{"name":"dataconnect"},"message":"downloading dataconnect-emulator-3.2.1.exe..."}}
+[debug] [2026-03-18T18:45:06.633Z] >>> [apiv2][query] GET https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-windows-amd64-v3.2.1 
+[debug] [2026-03-18T18:45:30.663Z] *** [apiv2] error from fetch(https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-windows-amd64-v3.2.1, {"headers":{},"method":"GET"}): FetchError: request to https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-windows-amd64-v3.2.1 failed, reason: 
+[debug] [2026-03-18T18:45:30.665Z] 'fdc build' failed with error: Failed to make request to https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-windows-amd64-v3.2.1 {"metadata":{"emulator":{"name":"dataconnect"},"message":"'fdc build' failed with error: Failed to make request to https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-windows-amd64-v3.2.1"}}
+[warn] !  Setup required, please run: firebase setup:emulators:dataconnect 
+[info] [Firebase Plugin] Stopping Data Connect toolkit

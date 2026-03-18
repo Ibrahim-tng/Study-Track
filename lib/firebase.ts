@@ -13,8 +13,9 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Initialiser Firebase (éviter la double initialisation)
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+// Initialize Firebase - optimized (lazy validation)
+const apps = getApps();
+const app = apps.length === 0 ? initializeApp(firebaseConfig) : apps[0];
 
 // Exporter les services Firebase
 export const auth = getAuth(app);

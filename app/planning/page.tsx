@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import TaskCard from "@/components/TaskCard";
 import { useAuth } from "@/hooks/useAuth";
@@ -32,13 +32,7 @@ export default function PlanningPage() {
     startOfWeek(new Date(), { locale: fr })
   );
 
-  useEffect(() => {
-    if (user) {
-      loadData();
-    }
-  }, [user]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -54,7 +48,13 @@ export default function PlanningPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      loadData();
+    }
+  }, [user, loadData]);
 
   const handleToggleTask = async (taskId: string, completed: boolean) => {
     try {
@@ -111,23 +111,23 @@ export default function PlanningPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Planning</h1>
-            <p className="text-gray-600 mt-2">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">📅 Planning</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">
               Vue hebdomadaire de vos tâches
             </p>
           </div>
 
           {/* Navigation semaine */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
             <button
               onClick={() => setCurrentWeekStart(subWeeks(currentWeekStart, 1))}
-              className="bg-white px-4 py-2 rounded-lg border-2 border-gray-200 hover:border-primary transition"
+              className="bg-white dark:bg-gray-800 px-4 py-2 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-primary dark:hover:border-blue-400 transition text-gray-900 dark:text-white"
             >
               ← Semaine précédente
             </button>
 
             <div className="text-center">
-              <p className="text-xl font-bold">
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
                 {format(currentWeekStart, "dd MMM", { locale: fr })} -{" "}
                 {format(weekEnd, "dd MMM yyyy", { locale: fr })}
               </p>
@@ -135,7 +135,7 @@ export default function PlanningPage() {
 
             <button
               onClick={() => setCurrentWeekStart(addWeeks(currentWeekStart, 1))}
-              className="bg-white px-4 py-2 rounded-lg border-2 border-gray-200 hover:border-primary transition"
+              className="bg-white dark:bg-gray-800 px-4 py-2 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-primary dark:hover:border-blue-400 transition text-gray-900 dark:text-white"
             >
               Semaine suivante →
             </button>
@@ -149,28 +149,28 @@ export default function PlanningPage() {
               return (
                 <div
                   key={day.toISOString()}
-                  className={`bg-white rounded-lg shadow p-4 ${
-                    isToday ? "ring-2 ring-primary" : ""
+                  className={`bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-200 dark:border-gray-700 p-4 ${
+                    isToday ? "ring-2 ring-primary dark:ring-blue-400" : ""
                   }`}
                 >
                   {/* En-tête du jour */}
-                  <div className="mb-4 pb-2 border-b">
-                    <p className="text-lg font-bold">
+                  <div className="mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">
+                    <p className="text-lg font-bold text-gray-900 dark:text-white capitalize">
                       {format(day, "EEEE", { locale: fr })}
                     </p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
                       {format(day, "dd MMM", { locale: fr })}
                     </p>
                     {isToday && (
                       <span className="inline-block mt-1 text-xs bg-primary text-white px-2 py-1 rounded">
-                        Aujourd'hui
+                        Aujourd&apos;hui
                       </span>
                     )}
                   </div>
 
                   {/* Tâches du jour */}
                   {dayTasks.length === 0 ? (
-                    <p className="text-sm text-gray-400 text-center py-4">
+                    <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-4">
                       Aucune tâche
                     </p>
                   ) : (
@@ -192,17 +192,17 @@ export default function PlanningPage() {
           </div>
 
           {/* Résumé de la semaine */}
-          <div className="mt-8 bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold mb-4">Résumé de la semaine</h2>
+          <div className="mt-8 bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-200 dark:border-gray-700 p-6">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Résumé de la semaine</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
-                <p className="text-sm text-gray-600">Total tâches</p>
-                <p className="text-2xl font-bold">
+                <p className="text-sm text-gray-600 dark:text-gray-400">Total tâches</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {tasksByDay.reduce((sum, { tasks }) => sum + tasks.length, 0)}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Tâches complétées</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Tâches complétées</p>
                 <p className="text-2xl font-bold text-success">
                   {tasksByDay.reduce(
                     (sum, { tasks }) =>
@@ -212,8 +212,8 @@ export default function PlanningPage() {
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Tâches restantes</p>
-                <p className="text-2xl font-bold text-primary">
+                <p className="text-sm text-gray-600 dark:text-gray-400">Tâches restantes</p>
+                <p className="text-2xl font-bold text-primary dark:text-blue-400">
                   {tasksByDay.reduce(
                     (sum, { tasks }) =>
                       sum + tasks.filter((t) => !t.completed).length,

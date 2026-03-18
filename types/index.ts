@@ -7,6 +7,10 @@ export interface User {
   email: string;
   createdAt: Timestamp;
   streak: number;
+  unlockedBadges?: string[];
+  totalPoints?: number;
+  level?: number;
+  preferredTheme?: 'light' | 'dark';
 }
 
 // Type pour une matière
@@ -20,6 +24,7 @@ export interface Subject {
 
 // Type pour une tâche
 export type TaskType = "Devoir" | "Révision" | "Examen" | "Projet";
+export type TaskPriority = "high" | "medium" | "low";
 
 export interface Task {
   id: string;
@@ -32,6 +37,7 @@ export interface Task {
   plannedDuration: number; // en minutes
   completed: boolean;
   completedAt?: Timestamp;
+  priority?: TaskPriority; // high, medium, low
   createdAt: Timestamp;
 }
 
@@ -66,4 +72,17 @@ export interface ChartData {
     borderColor?: string;
     borderWidth?: number;
   }[];
+}
+
+// Type pour les objectifs d'étude
+export interface StudyGoal {
+  id: string;
+  userId: string;
+  period: "daily" | "weekly" | "monthly"; // Période
+  targetHours: number; // Heures cibles à étudier
+  achievedHours?: number; // Heures accomplies
+  startDate: Timestamp;
+  endDate: Timestamp;
+  completed: boolean;
+  createdAt: Timestamp;
 }

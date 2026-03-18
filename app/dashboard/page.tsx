@@ -1,11 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import StatCard from "@/components/StatCard";
 import TaskCard from "@/components/TaskCard";
 import FocusMode from "@/components/FocusMode";
+import MiniBadges from "@/components/MiniBadges";
+import FloatingActionButton from "@/components/FloatingActionButton";
+import TaskFilters from "@/components/TaskFilters";
+import StudyGoals from "@/components/StudyGoals";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { useAuth } from "@/hooks/useAuth";
+import { useBadges } from "@/hooks/useBadges";
 import { Task, Subject, TaskType } from "@/types";
 import {
   getUserTasks,
@@ -20,16 +26,35 @@ import {
   deleteSubject,
 } from "@/lib/firestore/subjects";
 import { calculateStreak, isTaskOverdue } from "@/utils/streak";
-import { Timestamp } from "firebase/firestore";
+import { useNotifications } from "@/context/NotificationContext";
+
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const { badges } = useBadges();
+  const { addToast } = useNotifications();
+  const hasCheckedNotifications = useRef(false);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showSubjectModal, setShowSubjectModal] = useState(false);
   const [showFocusMode, setShowFocusMode] = useState(false);
+  const [sparkleTaskId, setSparkleTaskId] = useState<string | null>(null);
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    variant: "danger" | "warning" | "info";
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    variant: "danger",
+    onConfirm: () => {},
+  });
 
   // États pour le formulaire de tâche
   const [taskForm, setTaskForm] = useState({
@@ -39,6 +64,7 @@ export default function DashboardPage() {
     subjectId: "",
     dueDate: "",
     plannedDuration: 60,
+    priority: "medium" as "high" | "medium" | "low",
   });
 
   // États pour le formulaire de matière
@@ -47,14 +73,8 @@ export default function DashboardPage() {
     color: "#3b82f6",
   });
 
-  // Charger les données
-  useEffect(() => {
-    if (user) {
-      loadData();
-    }
-  }, [user]);
-
-  const loadData = async () => {
+  // Charger les données — stabilisé avec useCallback
+  const loadData = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -64,25 +84,81 @@ export default function DashboardPage() {
       ]);
 
       setTasks(tasksData);
+      setFilteredTasks(tasksData);
       setSubjects(subjectsData);
+
+      // --- Smart Notifications for deadlines ---
+      if (!hasCheckedNotifications.current) {
+        hasCheckedNotifications.current = true;
+        const now = new Date();
+        const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+        const tomorrowEnd = new Date(todayEnd);
+        tomorrowEnd.setDate(tomorrowEnd.getDate() + 1);
+
+        const pending = tasksData.filter((t) => !t.completed);
+        const overdue = pending.filter((t) => t.dueDate && t.dueDate.toDate() < now);
+        const dueToday = pending.filter((t) => {
+          if (!t.dueDate) return false;
+          const d = t.dueDate.toDate();
+          return d >= now && d <= todayEnd;
+        });
+        const dueTomorrow = pending.filter((t) => {
+          if (!t.dueDate) return false;
+          const d = t.dueDate.toDate();
+          return d > todayEnd && d <= tomorrowEnd;
+        });
+
+        if (overdue.length > 0) {
+          setTimeout(() => addToast("error", `${overdue.length} tâche${overdue.length > 1 ? 's' : ''} en retard !`, "Pense à les compléter ou à les reporter."), 1000);
+        }
+        if (dueToday.length > 0) {
+          setTimeout(() => addToast("warning", `${dueToday.length} tâche${dueToday.length > 1 ? 's' : ''} à rendre aujourd'hui`, dueToday.map(t => t.title).join(', ')), 2000);
+        }
+        if (dueTomorrow.length > 0) {
+          setTimeout(() => addToast("info", `${dueTomorrow.length} tâche${dueTomorrow.length > 1 ? 's' : ''} à rendre demain`, dueTomorrow.map(t => t.title).join(', ')), 3000);
+        }
+      }
+      // --- End Notifications ---
     } catch (error) {
       console.error("Erreur lors du chargement des données:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, addToast]);
 
-  // Basculer l'état de complétion d'une tâche
+  useEffect(() => {
+    if (user) {
+      loadData();
+    }
+  }, [user, loadData]);
+
+  // Basculer l'état de complétion d'une tâche (Optimistic UI)
   const handleToggleTask = async (taskId: string, completed: boolean) => {
+    // Optimistic update: update local state immediately
+    const updateLocal = (prevTasks: typeof tasks) =>
+      prevTasks.map((t) => (t.id === taskId ? { ...t, completed } : t));
+    setTasks(updateLocal);
+    setFilteredTasks(updateLocal);
+
+    // Sparkle on completion
+    if (completed) {
+      setSparkleTaskId(taskId);
+      setTimeout(() => setSparkleTaskId(null), 1000);
+    }
+
     try {
       if (completed) {
         await completeTask(taskId);
       } else {
         await uncompleteTask(taskId);
       }
-      await loadData();
     } catch (error) {
+      // Rollback on error
       console.error("Erreur lors de la mise à jour de la tâche:", error);
+      const rollback = (prevTasks: typeof tasks) =>
+        prevTasks.map((t) => (t.id === taskId ? { ...t, completed: !completed } : t));
+      setTasks(rollback);
+      setFilteredTasks(rollback);
     }
   };
 
@@ -100,7 +176,8 @@ export default function DashboardPage() {
         taskForm.description,
         taskForm.type,
         dueDate,
-        taskForm.plannedDuration
+        taskForm.plannedDuration,
+        taskForm.priority
       );
 
       // Réinitialiser le formulaire
@@ -111,6 +188,7 @@ export default function DashboardPage() {
         subjectId: "",
         dueDate: "",
         plannedDuration: 60,
+        priority: "medium",
       });
       setShowTaskModal(false);
       await loadData();
@@ -141,39 +219,106 @@ export default function DashboardPage() {
 
   // Supprimer une tâche
   const handleDeleteTask = async (taskId: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer cette tâche ?")) return;
-
-    try {
-      await deleteTask(taskId);
-      await loadData();
-    } catch (error) {
-      console.error("Erreur lors de la suppression de la tâche:", error);
-    }
+    setConfirmState({
+      isOpen: true,
+      title: "Supprimer la tâche",
+      message: "Es-tu sûr de vouloir supprimer cette tâche ? Cette action est irréversible.",
+      variant: "danger",
+      onConfirm: async () => {
+        setConfirmState((s) => ({ ...s, isOpen: false }));
+        try {
+          await deleteTask(taskId);
+          await loadData();
+        } catch (error) {
+          console.error("Erreur lors de la suppression:", error);
+        }
+      },
+    });
   };
 
   // Supprimer une matière
   const handleDeleteSubject = async (subjectId: string) => {
-    // Vérifier si des tâches utilisent cette matière
     const tasksWithSubject = tasks.filter((t) => t.subjectId === subjectId);
-    
-    if (tasksWithSubject.length > 0) {
-      if (!confirm(`Cette matière contient ${tasksWithSubject.length} tâche(s). Voulez-vous vraiment la supprimer ? Les tâches associées seront également supprimées.`)) {
-        return;
-      }
-      // Supprimer toutes les tâches associées
-      for (const task of tasksWithSubject) {
-        await deleteTask(task.id);
-      }
-    } else {
-      if (!confirm("Êtes-vous sûr de vouloir supprimer cette matière ?")) return;
-    }
+    const msg = tasksWithSubject.length > 0
+      ? `Cette matière contient ${tasksWithSubject.length} tâche(s). Elles seront également supprimées.`
+      : "Es-tu sûr de vouloir supprimer cette matière ?";
 
-    try {
-      await deleteSubject(subjectId);
-      await loadData();
-    } catch (error) {
-      console.error("Erreur lors de la suppression de la matière:", error);
-    }
+    setConfirmState({
+      isOpen: true,
+      title: "Supprimer la matière",
+      message: msg,
+      variant: "danger",
+      onConfirm: async () => {
+        setConfirmState((s) => ({ ...s, isOpen: false }));
+        try {
+          for (const task of tasksWithSubject) {
+            await deleteTask(task.id);
+          }
+          await deleteSubject(subjectId);
+          await loadData();
+        } catch (error) {
+          console.error("Erreur lors de la suppression de la matière:", error);
+        }
+      },
+    });
+  };
+
+  // IA: Découper une tâche
+  const [isBreakingDown, setIsBreakingDown] = useState(false);
+  const handleBreakdownTask = async (task: Task) => {
+    if (!user) return;
+
+    setConfirmState({
+      isOpen: true,
+      title: "Décomposer avec l'IA 🧠",
+      message: `Veux-tu que l'IA décompose "${task.title}" en sous-tâches actionnables ?`,
+      variant: "info",
+      onConfirm: async () => {
+        setConfirmState((s) => ({ ...s, isOpen: false }));
+        setIsBreakingDown(true);
+        try {
+          const idToken = await user.getIdToken();
+          const response = await fetch("/api/breakdown-task", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${idToken}`,
+            },
+            body: JSON.stringify({
+              title: task.title.slice(0, 200),
+              description: (task.description || "").slice(0, 500),
+            }),
+          });
+
+          if (!response.ok) throw new Error("Erreur de l'API IA");
+
+          const data = await response.json();
+
+          if (data.subtasks && Array.isArray(data.subtasks)) {
+            for (const subtask of data.subtasks) {
+              await createTask(
+                user.uid,
+                task.subjectId,
+                `[Plan] ${subtask.title}`,
+                subtask.description,
+                task.type,
+                task.dueDate.toDate(),
+                subtask.plannedDuration,
+                task.priority
+              );
+            }
+            await completeTask(task.id);
+            addToast("success", `Plan d'action généré !`, `${data.subtasks.length} sous-tâches créées 🎉`);
+            await loadData();
+          }
+        } catch (error) {
+          console.error("Erreur Breakdown IA:", error);
+          addToast("error", "Erreur IA", "Une erreur est survenue lors du découpage.");
+        } finally {
+          setIsBreakingDown(false);
+        }
+      },
+    });
   };
 
   // Calculer les statistiques
@@ -201,18 +346,57 @@ export default function DashboardPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* ConfirmDialog */}
+      <ConfirmDialog
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        variant={confirmState.variant}
+        onConfirm={confirmState.onConfirm}
+        onCancel={() => setConfirmState((s) => ({ ...s, isOpen: false }))}
+      />
+
+      {isBreakingDown && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center z-[100] text-white">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-white mb-4"></div>
+          <p className="font-bold text-xl">L&apos;IA réfléchit au plan d&apos;action...</p>
+          <p className="text-sm opacity-80">Génération des sous-tâches 🧠✨</p>
+        </div>
+      )}
+      
+      <div className="min-h-screen py-12 px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto space-y-12">
           {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-            <p className="text-gray-600 mt-2">
-              Bienvenue ! Voici un aperçu de vos tâches.
-            </p>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 animate-spring-in">
+            <div>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
+                Bonjour, <span className="text-gradient">{user?.displayName?.split(' ')[0] || 'Étudiant'}</span> 👋
+              </h1>
+              <p className="text-slate-500 dark:text-slate-400 mt-2 sm:mt-3 text-base sm:text-lg font-medium">
+                Voici ce qui t&apos;attend pour aujourd&apos;hui.
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowFocusMode(true)}
+                className="btn-premium flex-1 sm:flex-none flex items-center justify-center gap-2 group"
+              >
+                <span className="group-hover:rotate-12 transition-transform">🔥</span>
+                Focus
+              </button>
+              <button
+                onClick={() => setShowTaskModal(true)}
+                className="btn-premium-outline flex-1 sm:flex-none flex items-center justify-center gap-2"
+              >
+                <span>➕</span>
+                Tâche
+              </button>
+            </div>
           </div>
 
-          {/* Statistiques */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Statistiques - Grid Modernisée */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 animate-spring-in" style={{ animationDelay: '0.1s' }}>
             <StatCard
               title="Total des tâches"
               value={totalTasks}
@@ -220,273 +404,336 @@ export default function DashboardPage() {
               color="blue"
             />
             <StatCard
-              title="Tâches complétées"
+              title="Progression"
               value={`${completedPercentage}%`}
-              icon="✅"
+              icon="🎯"
               color={completedPercentage >= 70 ? "green" : completedPercentage >= 40 ? "yellow" : "red"}
             />
             <StatCard
-              title="Tâches en retard"
+              title="En retard"
               value={overdueTasks}
-              icon="⚠️"
+              icon="⏰"
               color={overdueTasks === 0 ? "green" : overdueTasks <= 3 ? "yellow" : "red"}
             />
             <StatCard
               title="Streak"
-              value={`${streak} ${streak > 1 ? "jours" : "jour"}`}
+              value={streak}
               icon="🔥"
               color={streak >= 7 ? "green" : streak >= 3 ? "yellow" : "blue"}
             />
           </div>
 
-          {/* Boutons d'action */}
-          <div className="flex gap-4 mb-8">
-            <button
-              onClick={() => setShowFocusMode(true)}
-              className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-lg font-medium hover:from-orange-600 hover:to-red-600 transition shadow-lg"
-            >
-              🔥 Mode Focus
-            </button>
-            <button
-              onClick={() => setShowTaskModal(true)}
-              className="bg-primary text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-600 transition"
-            >
-              ➕ Nouvelle tâche
-            </button>
-            <button
-              onClick={() => setShowSubjectModal(true)}
-              className="bg-white text-primary border-2 border-primary px-6 py-3 rounded-lg font-medium hover:bg-primary hover:text-white transition"
-            >
-              📚 Nouvelle matière
-            </button>
+          {/* Section Badges - Glassmorphism */}
+          <div className="animate-spring-in" style={{ animationDelay: '0.2s' }}>
+             <MiniBadges unlockedBadges={badges.unlockedBadges} />
           </div>
 
-          {/* Liste des matières */}
-          {subjects.length > 0 && (
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                📚 Mes matières
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {subjects.map((subject) => (
-                  <div
-                    key={subject.id}
-                    className="bg-white p-4 rounded-lg shadow border-l-4 flex items-center justify-between"
-                    style={{ borderLeftColor: subject.color }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-6 h-6 rounded-full"
-                        style={{ backgroundColor: subject.color }}
-                      ></div>
-                      <span className="font-medium">{subject.name}</span>
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 animate-spring-in" style={{ animationDelay: '0.3s' }}>
+            {/* Left Column: Tasks */}
+            <div className="lg:col-span-2 space-y-10">
+              {/* Overdue Tasks */}
+              {overduetasksList.length > 0 && (
+                <section>
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                       <span className="text-rose-500">⚠️</span> Tâches prioritaires
+                    </h2>
+                    <span className="px-3 py-1 bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-full text-xs font-bold uppercase tracking-widest border border-rose-200 dark:border-rose-900/30">
+                       {overduetasksList.length} en retard
+                    </span>
+                  </div>
+                  <div className="space-y-4">
+                    {overduetasksList.map((task) => (
+                      <TaskCard
+                        key={task.id}
+                        task={task}
+                        subject={subjects.find((s) => s.id === task.subjectId)}
+                        onToggle={handleToggleTask}
+                        onDelete={handleDeleteTask}
+                      />
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* All Tasks */}
+              <section>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                  <h2 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                     <span className="text-indigo-500">📚</span> Toutes les tâches
+                  </h2>
+                  <TaskFilters
+                    tasks={tasks}
+                    subjects={subjects}
+                    onFilter={setFilteredTasks}
+                  />
+                </div>
+
+                {filteredTasks.length === 0 ? (
+                  <div className="card-premium text-center py-20">
+                    <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-4xl mx-auto mb-6">
+                      ✨
                     </div>
+                    <p className="text-slate-500 dark:text-slate-400 text-lg font-medium mb-8">
+                      Tout est sous contrôle ! Prêt pour une nouvelle tâche ?
+                    </p>
                     <button
-                      onClick={() => handleDeleteSubject(subject.id)}
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded transition"
-                      title="Supprimer cette matière"
+                      onClick={() => setShowTaskModal(true)}
+                      className="btn-premium"
                     >
-                      🗑️
+                      Ajouter une tâche
                     </button>
                   </div>
-                ))}
-              </div>
+                ) : (
+                  <div className="space-y-4">
+                    {filteredTasks.map((task) => (
+                      <div key={task.id} className="relative">
+                        <TaskCard
+                          task={task}
+                          subject={subjects.find((s) => s.id === task.subjectId)}
+                          onToggle={handleToggleTask}
+                          onDelete={handleDeleteTask}
+                          onBreakdownTask={handleBreakdownTask}
+                        />
+                        {sparkleTaskId === task.id && (
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <span className="text-4xl animate-sparkle">✨</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
             </div>
-          )}
 
-          {/* Tâches en retard */}
-          {overduetasksList.length > 0 && (
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                ⚠️ Tâches en retard
-              </h2>
-              <div className="space-y-3">
-                {overduetasksList.map((task) => (
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    subject={subjects.find((s) => s.id === task.subjectId)}
-                    onToggle={handleToggleTask}
-                    onDelete={handleDeleteTask}
-                  />
-                ))}
-              </div>
+            {/* Right Column: Subjects & Sidebar */}
+            <div className="space-y-10">
+              {/* Study Goals Widget */}
+              {user && <StudyGoals userId={user.uid} />}
+
+              {/* Subjects Section */}
+              <section>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">📚 Matières</h2>
+                  <button 
+                    onClick={() => setShowSubjectModal(true)}
+                    className="text-xs font-bold text-indigo-500 hover:text-indigo-600 uppercase tracking-widest"
+                  >
+                    + Ajouter
+                  </button>
+                </div>
+                
+                <div className="space-y-3">
+                  {subjects.length === 0 ? (
+                    <div className="p-6 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-center">
+                       <p className="text-sm text-slate-400">Aucune matière créée encore.</p>
+                    </div>
+                  ) : (
+                    subjects.map((subject) => (
+                      <div
+                        key={subject.id}
+                        className="group flex items-center justify-between p-4 glass rounded-2xl hover:bg-white/90 dark:hover:bg-slate-800/90 transition-all border-l-4"
+                        style={{ borderLeftColor: subject.color }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="w-4 h-4 rounded-full ring-4 ring-white dark:ring-slate-900 shadow-sm"
+                            style={{ backgroundColor: subject.color }}
+                          ></div>
+                          <span className="font-bold text-slate-700 dark:text-slate-200">{subject.name}</span>
+                        </div>
+                        <button
+                          onClick={() => handleDeleteSubject(subject.id)}
+                          className="opacity-0 group-hover:opacity-100 p-2 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all"
+                          title="Supprimer"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </section>
             </div>
-          )}
-
-          {/* Toutes les tâches */}
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Toutes les tâches
-            </h2>
-            {tasks.length === 0 ? (
-              <div className="text-center py-12 bg-white rounded-lg shadow">
-                <p className="text-gray-500 text-lg mb-4">
-                  Aucune tâche pour le moment
-                </p>
-                <button
-                  onClick={() => setShowTaskModal(true)}
-                  className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition"
-                >
-                  Créer votre première tâche
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {tasks.map((task) => (
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    subject={subjects.find((s) => s.id === task.subjectId)}
-                    onToggle={handleToggleTask}
-                    onDelete={handleDeleteTask}
-                  />
-                ))}
-              </div>
-            )}
           </div>
         </div>
       </div>
 
-      {/* Modal nouvelle tâche */}
       {showTaskModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
-            <h2 className="text-2xl font-bold mb-4">Nouvelle tâche</h2>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-end md:items-center justify-center z-50 md:p-4 transition-all duration-300">
+          <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] md:rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] w-full max-w-xl p-8 max-h-[90vh] overflow-y-auto border-t md:border border-white/20 dark:border-slate-800 animate-slide-up md:animate-spring-in">
+            {/* Grabber handle for mobile */}
+            <div className="w-16 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto mb-8 md:hidden"></div>
+            
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Nouvelle tâche</h2>
+              <button onClick={() => setShowTaskModal(false)} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                ✕
+              </button>
+            </div>
 
             {subjects.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-600 mb-4">
-                  Vous devez d'abord créer une matière
+              <div className="text-center py-12">
+                <div className="w-20 h-20 bg-amber-500/10 text-amber-500 rounded-full flex items-center justify-center text-3xl mx-auto mb-6">
+                  📚
+                </div>
+                <p className="text-slate-600 dark:text-slate-400 mb-8 font-medium">
+                  Hop là ! Tu dois d&apos;abord créer une matière avant d&apos;ajouter des tâches.
                 </p>
                 <button
                   onClick={() => {
                     setShowTaskModal(false);
                     setShowSubjectModal(true);
                   }}
-                  className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition"
+                  className="btn-premium"
                 >
-                  Créer une matière
+                  Créer ma première matière
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleCreateTask} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Titre *
-                  </label>
-                  <input
-                    type="text"
-                    value={taskForm.title}
-                    onChange={(e) =>
-                      setTaskForm({ ...taskForm, title: e.target.value })
-                    }
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="Ex: Devoir de mathématiques"
-                  />
+              <form onSubmit={handleCreateTask} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-black uppercase tracking-widest text-slate-500 mb-3 ml-1">
+                      Titre de la mission
+                    </label>
+                    <input
+                      type="text"
+                      value={taskForm.title}
+                      onChange={(e) =>
+                        setTaskForm({ ...taskForm, title: e.target.value })
+                      }
+                      required
+                      className="w-full px-5 py-3.5 bg-slate-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-indigo-500 dark:focus:border-indigo-400 rounded-2xl text-slate-900 dark:text-white transition-all outline-none shadow-sm"
+                      placeholder="Ex: Réviser l'algèbre linéaire"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-black uppercase tracking-widest text-slate-500 mb-3 ml-1">
+                      Description (Optionnel)
+                    </label>
+                    <textarea
+                      value={taskForm.description}
+                      onChange={(e) =>
+                        setTaskForm({ ...taskForm, description: e.target.value })
+                      }
+                      className="w-full px-5 py-3.5 bg-slate-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-indigo-500 dark:focus:border-indigo-400 rounded-2xl text-slate-900 dark:text-white transition-all outline-none shadow-sm"
+                      rows={3}
+                      placeholder="Quels sont les détails importants ?"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-black uppercase tracking-widest text-slate-500 mb-3 ml-1">
+                      Type
+                    </label>
+                    <select
+                      value={taskForm.type}
+                      onChange={(e) =>
+                        setTaskForm({ ...taskForm, type: e.target.value as TaskType })
+                      }
+                      required
+                      className="w-full px-5 py-3.5 bg-slate-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-indigo-500 dark:focus:border-indigo-400 rounded-2xl text-slate-900 dark:text-white transition-all outline-none appearance-none cursor-pointer"
+                    >
+                      <option value="Devoir">Devoir 📝</option>
+                      <option value="Révision">Révision 🧠</option>
+                      <option value="Examen">Examen 🏁</option>
+                      <option value="Projet">Projet 🚀</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-black uppercase tracking-widest text-slate-500 mb-3 ml-1">
+                      Matière
+                    </label>
+                    <select
+                      value={taskForm.subjectId}
+                      onChange={(e) =>
+                        setTaskForm({ ...taskForm, subjectId: e.target.value })
+                      }
+                      required
+                      className="w-full px-5 py-3.5 bg-slate-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-indigo-500 dark:focus:border-indigo-400 rounded-2xl text-slate-900 dark:text-white transition-all outline-none appearance-none cursor-pointer"
+                    >
+                      <option value="">Sélectionner</option>
+                      {subjects.map((subject) => (
+                        <option key={subject.id} value={subject.id}>
+                          {subject.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-black uppercase tracking-widest text-slate-500 mb-3 ml-1">
+                      Échéance
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={taskForm.dueDate}
+                      onChange={(e) =>
+                        setTaskForm({ ...taskForm, dueDate: e.target.value })
+                      }
+                      required
+                      className="w-full px-5 py-3.5 bg-slate-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-indigo-500 dark:focus:border-indigo-400 rounded-2xl text-slate-900 dark:text-white transition-all outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-black uppercase tracking-widest text-slate-500 mb-3 ml-1">
+                      Durée (min)
+                    </label>
+                    <input
+                      type="number"
+                      value={taskForm.plannedDuration}
+                      onChange={(e) =>
+                        setTaskForm({
+                          ...taskForm,
+                          plannedDuration: parseInt(e.target.value),
+                        })
+                      }
+                      required
+                      min={1}
+                      className="w-full px-5 py-3.5 bg-slate-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-indigo-500 dark:focus:border-indigo-400 rounded-2xl text-slate-900 dark:text-white transition-all outline-none"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-black uppercase tracking-widest text-slate-500 mb-3 ml-1">
+                      Priorité
+                    </label>
+                    <div className="flex gap-4">
+                      {['low', 'medium', 'high'].map((p) => (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => setTaskForm({ ...taskForm, priority: p as any })}
+                          className={`flex-1 py-3 rounded-xl border-2 transition-all font-bold text-sm ${
+                            taskForm.priority === p 
+                              ? "bg-indigo-500 border-indigo-500 text-white shadow-lg shadow-indigo-500/30" 
+                              : "border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-500"
+                          }`}
+                        >
+                          {p === 'low' ? 'Basse' : p === 'medium' ? 'Moyenne' : 'Haute'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Description
-                  </label>
-                  <textarea
-                    value={taskForm.description}
-                    onChange={(e) =>
-                      setTaskForm({ ...taskForm, description: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    rows={3}
-                    placeholder="Détails de la tâche..."
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Type *
-                  </label>
-                  <select
-                    value={taskForm.type}
-                    onChange={(e) =>
-                      setTaskForm({ ...taskForm, type: e.target.value as TaskType })
-                    }
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  >
-                    <option value="Devoir">Devoir</option>
-                    <option value="Révision">Révision</option>
-                    <option value="Examen">Examen</option>
-                    <option value="Projet">Projet</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Matière *
-                  </label>
-                  <select
-                    value={taskForm.subjectId}
-                    onChange={(e) =>
-                      setTaskForm({ ...taskForm, subjectId: e.target.value })
-                    }
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  >
-                    <option value="">Sélectionner une matière</option>
-                    {subjects.map((subject) => (
-                      <option key={subject.id} value={subject.id}>
-                        {subject.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Date d'échéance *
-                  </label>
-                  <input
-                    type="datetime-local"
-                    value={taskForm.dueDate}
-                    onChange={(e) =>
-                      setTaskForm({ ...taskForm, dueDate: e.target.value })
-                    }
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Durée prévue (minutes) *
-                  </label>
-                  <input
-                    type="number"
-                    value={taskForm.plannedDuration}
-                    onChange={(e) =>
-                      setTaskForm({
-                        ...taskForm,
-                        plannedDuration: parseInt(e.target.value),
-                      })
-                    }
-                    required
-                    min={1}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  />
-                </div>
-
-                <div className="flex gap-3 pt-4">
+                <div className="flex gap-4 pt-6">
                   <button
                     type="submit"
-                    className="flex-1 bg-primary text-white py-2 rounded-lg hover:bg-blue-600 transition"
+                    className="flex-1 btn-premium"
                   >
-                    Créer
+                    Créer la tâche
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowTaskModal(false)}
-                    className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300 transition"
+                    className="flex-1 btn-premium-outline"
                   >
                     Annuler
                   </button>
@@ -497,16 +744,23 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Modal nouvelle matière */}
       {showSubjectModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h2 className="text-2xl font-bold mb-4">Nouvelle matière</h2>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-end md:items-center justify-center z-50 md:p-4 transition-all duration-300">
+          <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] md:rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] w-full max-w-md p-8 max-h-[90vh] overflow-y-auto border-t md:border border-white/20 dark:border-slate-800 animate-slide-up md:animate-spring-in">
+            {/* Grabber handle for mobile */}
+            <div className="w-16 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto mb-8 md:hidden"></div>
+            
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Nouvelle matière</h2>
+              <button onClick={() => setShowSubjectModal(false)} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                ✕
+              </button>
+            </div>
 
-            <form onSubmit={handleCreateSubject} className="space-y-4">
+            <form onSubmit={handleCreateSubject} className="space-y-8">
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Nom de la matière *
+                <label className="block text-xs font-black uppercase tracking-widest text-slate-500 mb-3 ml-1">
+                  Nom de la matière
                 </label>
                 <input
                   type="text"
@@ -515,23 +769,23 @@ export default function DashboardPage() {
                     setSubjectForm({ ...subjectForm, name: e.target.value })
                   }
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Ex: Mathématiques"
+                  className="w-full px-5 py-3.5 bg-slate-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-indigo-500 dark:focus:border-indigo-400 rounded-2xl text-slate-900 dark:text-white transition-all outline-none shadow-sm"
+                  placeholder="Ex: Intelligence Artificielle"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Couleur *
+                <label className="block text-xs font-black uppercase tracking-widest text-slate-500 mb-3 ml-1">
+                  Identité visuelle (Couleur)
                 </label>
-                <div className="flex gap-2">
+                <div className="flex bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl gap-4 items-center border border-slate-100 dark:border-slate-800">
                   <input
                     type="color"
                     value={subjectForm.color}
                     onChange={(e) =>
                       setSubjectForm({ ...subjectForm, color: e.target.value })
                     }
-                    className="w-16 h-10 rounded cursor-pointer"
+                    className="w-14 h-14 rounded-xl cursor-pointer bg-transparent border-none overflow-hidden"
                   />
                   <input
                     type="text"
@@ -539,23 +793,26 @@ export default function DashboardPage() {
                     onChange={(e) =>
                       setSubjectForm({ ...subjectForm, color: e.target.value })
                     }
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="flex-1 bg-transparent border-none focus:ring-0 text-slate-900 dark:text-white font-mono font-bold"
                     placeholder="#3b82f6"
                   />
                 </div>
+                <p className="mt-3 text-[10px] text-slate-400 font-bold uppercase tracking-wider ml-1">
+                  Cette couleur sera utilisée pour toutes les tâches associées.
+                </p>
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-4 pt-4">
                 <button
                   type="submit"
-                  className="flex-1 bg-primary text-white py-2 rounded-lg hover:bg-blue-600 transition"
+                  className="flex-1 btn-premium"
                 >
-                  Créer
+                  Ajouter la matière
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowSubjectModal(false)}
-                  className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300 transition"
+                  className="flex-1 btn-premium-outline"
                 >
                   Annuler
                 </button>
@@ -575,6 +832,9 @@ export default function DashboardPage() {
           onSessionComplete={loadData}
         />
       )}
+      
+      {/* Floating Action Button (Mobile Only) */}
+      <FloatingActionButton onClick={() => setShowTaskModal(true)} />
     </ProtectedRoute>
   );
 }

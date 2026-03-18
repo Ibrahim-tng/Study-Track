@@ -28,7 +28,7 @@ export async function createFocusSession(
     subjectId: subjectId || null,
     duration,
     type,
-    startedAt: Timestamp.fromMillis(now.toMillis() - duration * 60 * 1000), // Calculer l'heure de début
+    startedAt: now,
     completedAt: now,
     createdAt: now,
   });
@@ -82,6 +82,21 @@ export async function getTodayFocusTime(userId: string): Promise<number> {
 }
 
 /**
+ * Récupérer les sessions Focus d'aujourd'hui (avec détails)
+ */
+export async function getTodayFocusSessions(userId: string): Promise<FocusSession[]> {
+  const sessions = await getUserFocusSessions(userId);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return sessions.filter((session) => {
+    const sessionDate = session.completedAt.toDate();
+    sessionDate.setHours(0, 0, 0, 0);
+    return sessionDate.getTime() === today.getTime();
+  });
+}
+
+/**
  * Récupérer le temps travaillé cette semaine
  */
 export async function getWeekFocusTime(userId: string): Promise<number> {
@@ -96,5 +111,21 @@ export async function getWeekFocusTime(userId: string): Promise<number> {
     return sessionDate >= weekStart && s.type === "work";
   });
   
+  return weekSessions.reduce((total, session) => total + session.duration, 0);
+}
+
+/**
+ * Calculer le temps total travaillé cette semaine (avec sessions complets)
+ */
+export async function getWeekTotalWorkTime(userId: string): Promise<number> {
+  const sessions = await getUserFocusSessions(userId);
+  const today = new Date();
+  const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  const weekSessions = sessions.filter((session) => {
+    const sessionDate = session.completedAt.toDate();
+    return sessionDate >= weekAgo && session.type === "work";
+  });
+
   return weekSessions.reduce((total, session) => total + session.duration, 0);
 }

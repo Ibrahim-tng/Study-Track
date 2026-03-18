@@ -3,46 +3,119 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Règles pour la collection users
+    // ----------------------------------------------------------------
+    // Helper functions
+    // ----------------------------------------------------------------
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function isValidString(field, maxLen) {
+      return field is string && field.size() > 0 && field.size() <= maxLen;
+    }
+
+    function isValidTimestamp(field) {
+      return field is timestamp;
+    }
+
+    // ----------------------------------------------------------------
+    // Collection: users
+    // ----------------------------------------------------------------
     match /users/{userId} {
-      // Un utilisateur peut lire et écrire uniquement ses propres données
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId)
+        && isValidString(request.resource.data.displayName, 100);
+      allow update: if isOwner(userId)
+        // Prevent userId from being changed
+        && request.resource.data.uid == userId;
+      allow delete: if isOwner(userId);
     }
-    
-    // Règles pour la collection subjects
+
+    // ----------------------------------------------------------------
+    // Collection: subjects
+    // ----------------------------------------------------------------
     match /subjects/{subjectId} {
-      // Un utilisateur peut lire ses matières
       allow read: if request.auth != null && resource.data.userId == request.auth.uid;
-      
-      // Un utilisateur peut créer une matière
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      
-      // Un utilisateur peut modifier/supprimer ses propres matières
-      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid
+        && isValidString(request.resource.data.name, 100)
+        && request.resource.data.color is string
+        && request.resource.data.color.matches('^#[0-9A-Fa-f]{6}$');
+
+      allow update: if request.auth != null
+        && resource.data.userId == request.auth.uid
+        // userId must remain unchanged
+        && request.resource.data.userId == resource.data.userId
+        && isValidString(request.resource.data.name, 100);
+
+      allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
-    
-    // Règles pour la collection tasks
+
+    // ----------------------------------------------------------------
+    // Collection: tasks
+    // ----------------------------------------------------------------
     match /tasks/{taskId} {
-      // Un utilisateur peut lire ses tâches
       allow read: if request.auth != null && resource.data.userId == request.auth.uid;
-      
-      // Un utilisateur peut créer une tâche
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      
-      // Un utilisateur peut modifier/supprimer ses propres tâches
-      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid
+        && isValidString(request.resource.data.title, 200)
+        && isValidTimestamp(request.resource.data.dueDate)
+        && request.resource.data.plannedDuration is number
+        && request.resource.data.plannedDuration >= 1
+        && request.resource.data.plannedDuration <= 1440
+        && request.resource.data.completed is bool;
+
+      allow update: if request.auth != null
+        && resource.data.userId == request.auth.uid
+        // userId & createdAt must remain unchanged
+        && request.resource.data.userId == resource.data.userId;
+
+      allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
-    
-    // Règles pour la collection focusSessions
+
+    // ----------------------------------------------------------------
+    // Collection: focusSessions
+    // ----------------------------------------------------------------
     match /focusSessions/{sessionId} {
-      // Un utilisateur peut lire ses sessions
       allow read: if request.auth != null && resource.data.userId == request.auth.uid;
-      
-      // Un utilisateur peut créer une session
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      
-      // Un utilisateur peut modifier/supprimer ses propres sessions
-      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.duration is number
+        && request.resource.data.duration >= 1
+        && isValidTimestamp(request.resource.data.date);
+
+      allow update: if request.auth != null
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == resource.data.userId;
+
+      allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+
+    // ----------------------------------------------------------------
+    // Collection: goals
+    // ----------------------------------------------------------------
+    match /goals/{goalId} {
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid
+        && isValidString(request.resource.data.title, 200)
+        && request.resource.data.targetHours is number
+        && request.resource.data.targetHours >= 1;
+
+      allow update: if request.auth != null
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == resource.data.userId;
+
+      allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+
+    // Deny all other collections by default
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

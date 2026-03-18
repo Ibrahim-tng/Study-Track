@@ -1,5 +1,5 @@
 import { Task } from "@/types";
-import { differenceInDays, startOfDay } from "date-fns";
+import { startOfDay } from "date-fns";
 
 /**
  * Calculer le streak (nombre de jours consécutifs avec au moins une tâche complétée)

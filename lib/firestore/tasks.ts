@@ -4,14 +4,15 @@ import {
   getDocs,
   query,
   where,
+  orderBy,
+  limit,
   updateDoc,
   deleteDoc,
   doc,
   Timestamp,
-  orderBy,
 } from "firebase/firestore";
 import { db } from "../firebase";
-import { Task, TaskType } from "@/types";
+import { Task, TaskType, TaskPriority } from "@/types";
 
 /**
  * Créer une nouvelle tâche
@@ -23,7 +24,8 @@ export async function createTask(
   description: string,
   type: TaskType,
   dueDate: Date,
-  plannedDuration: number
+  plannedDuration: number,
+  priority?: TaskPriority
 ): Promise<string> {
   const tasksRef = collection(db, "tasks");
   const docRef = await addDoc(tasksRef, {
@@ -34,6 +36,7 @@ export async function createTask(
     type,
     dueDate: Timestamp.fromDate(dueDate),
     plannedDuration,
+    priority: priority || "medium",
     completed: false,
     createdAt: Timestamp.now(),
   });
@@ -41,14 +44,16 @@ export async function createTask(
 }
 
 /**
- * Récupérer toutes les tâches d'un utilisateur
+ * Récupérer toutes les tâches d'un utilisateur (triées par date, max 200)
  */
 export async function getUserTasks(userId: string): Promise<Task[]> {
   const tasksRef = collection(db, "tasks");
-  // Requête simple sans orderBy pour éviter l'index composite
+  // Use Firestore server-side ordering + limit (leverages composite index userId+dueDate)
   const q = query(
     tasksRef,
-    where("userId", "==", userId)
+    where("userId", "==", userId),
+    orderBy("dueDate", "asc"),
+    limit(200)
   );
   const querySnapshot = await getDocs(q);
 
@@ -57,12 +62,7 @@ export async function getUserTasks(userId: string): Promise<Task[]> {
     tasks.push({ id: doc.id, ...doc.data() } as Task);
   });
 
-  // Trier côté client par date d'échéance
-  return tasks.sort((a, b) => {
-    const dateA = a.dueDate.toDate().getTime();
-    const dateB = b.dueDate.toDate().getTime();
-    return dateA - dateB;
-  });
+  return tasks;
 }
 
 /**
