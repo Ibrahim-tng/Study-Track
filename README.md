@@ -279,7 +279,7 @@ Ce projet est open source et disponible sous licence MIT.
 
 ## 👤 Auteur
 
-Développé avec ❤️ par votre équipe
+Développé avec fun par votre B.I.T
 
 ## 🤝 Contribution
 
