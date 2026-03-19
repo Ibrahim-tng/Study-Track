@@ -51,7 +51,12 @@ NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET = portfolio-5e8e4.firebasestorage.app
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID = 977845140288
 NEXT_PUBLIC_FIREBASE_APP_ID = 1:977845140288:web:e6fc2543ed3eeebfd1d8a5
 NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID = G-V3DDHH93S5
+FIREBASE_CLIENT_EMAIL = firebase-adminsdk-fbsvc@portfolio-5e8e4.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY = "la_clé_privée_totale_avec_les_guillemets"
 ```
+
+> [!IMPORTANT]
+> **FIREBASE_PRIVATE_KEY** : Tu dois copier la clé complète incluant `-----BEGIN PRIVATE KEY-----` et `-----END PRIVATE KEY-----`. Sur Vercel, entoure la valeur de guillemets `"` pour préserver les retours à la ligne `\n`.
 
 3. Pour chaque variable :
    - Name : copie le nom (ex: `NEXT_PUBLIC_FIREBASE_API_KEY`)
@@ -112,6 +117,8 @@ vercel env add NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
 vercel env add NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
 vercel env add NEXT_PUBLIC_FIREBASE_APP_ID
 vercel env add NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+vercel env add FIREBASE_CLIENT_EMAIL
+vercel env add FIREBASE_PRIVATE_KEY
 ```
 
 #### 5. Redéploie avec les variables

@@ -19,7 +19,24 @@ function getAdminApp() {
   }, "rate-limiter");
 }
 
-const db = getFirestore(getAdminApp());
+let db: any = null;
+
+function getDb() {
+  if (db) return db;
+
+  try {
+    const adminApp = getAdminApp();
+    db = getFirestore(adminApp);
+    return db;
+  } catch (error) {
+    if (process.env.NODE_ENV === "production" && !process.env.CI) {
+      console.error("Failed to initialize Firebase Admin for Rate Limiting:", error);
+    } else {
+      console.warn("Firebase Admin environment variables missing. Rate limiting will be disabled (fail-open).");
+    }
+    return null;
+  }
+}
 const LIMITS_COLLECTION = "rate_limits";
 
 /**
@@ -31,11 +48,14 @@ export async function checkRateLimit(
   maxRequests: number = 30,
   windowMs: number = 60000
 ): Promise<boolean> {
+  const currentDb = getDb();
+  if (!currentDb) return true; // Fail open if Firebase is not configured
+
   const now = Date.now();
-  const docRef = db.collection(LIMITS_COLLECTION).doc(identifier);
+  const docRef = currentDb.collection(LIMITS_COLLECTION).doc(identifier);
 
   try {
-    const result = await db.runTransaction(async (transaction) => {
+    const result = await currentDb.runTransaction(async (transaction: any) => {
       const doc = await transaction.get(docRef);
       const data = doc.data();
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import webpush from "web-push";
-import { adminDb } from "@/lib/firebaseAdmin";
+import { getAdminDb } from "@/lib/firebaseAdmin";
 
 // Simple configuration wrapper to prevent build crashes
 const configureWebPush = () => {
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Get all subscriptions for this user
-    const subscriptionsSnapshot = await adminDb
+    const subscriptionsSnapshot = await getAdminDb()
       .collection("users")
       .doc(userId)
       .collection("push_subscriptions")

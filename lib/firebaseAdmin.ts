@@ -37,6 +37,12 @@ export async function verifyFirebaseToken(authHeader: string | null): Promise<st
   return decoded.uid;
 }
 
-export const adminDb = getFirestore(getAdminApp());
-export const adminAuth = getAuth(getAdminApp());
+// Exports functions that initialize the app only when called
+export function getAdminDb() {
+  return getFirestore(getAdminApp());
+}
+
+export function getAdminAuth() {
+  return getAuth(getAdminApp());
+}
 

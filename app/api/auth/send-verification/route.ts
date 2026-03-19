@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
-import * as admin from 'firebase-admin';
+import { getAdminAuth } from '@/lib/firebaseAdmin';
 
 // Rate limiter: max 5 requests per IP per 10 minutes
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -15,21 +15,6 @@ function checkRateLimit(ip: string): boolean {
   if (entry.count >= 5) return false;
   entry.count++;
   return true;
-}
-
-// Initialize Firebase Admin if not already initialized
-if (!admin.apps.length) {
-  try {
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      }),
-    });
-  } catch (error) {
-    console.error('Firebase Admin Initialization Error:', error);
-  }
 }
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -64,7 +49,7 @@ export async function POST(request: Request) {
     };
 
     // Generate a simple link that goes to the Firebase handler
-    const verificationLink = await admin.auth().generateEmailVerificationLink(email, actionCodeSettings);
+    const verificationLink = await getAdminAuth().generateEmailVerificationLink(email, actionCodeSettings);
 
     // 2. Send the custom email using Resend
     const { data, error } = await resend.emails.send({

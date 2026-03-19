@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebaseAdmin";
+import { getAdminDb } from "@/lib/firebaseAdmin";
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     // We store it in a subcollection 'subscriptions' to support multiple devices
     const subscriptionId = Buffer.from(subscription.endpoint).toString("base64").slice(0, 50);
     
-    await adminDb
+    await getAdminDb()
       .collection("users")
       .doc(userId)
       .collection("push_subscriptions")
