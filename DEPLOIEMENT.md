@@ -38,7 +38,7 @@ Ton projet StudyTrack est **100% configuré** avec tes clés Firebase !
    Copie-colle ces 7 variables dans la section "Environment Variables" :
    
    ```
-   NEXT_PUBLIC_FIREBASE_API_KEY = AIzaSyD5IJTvvYCizSSrBtPucdGLxFNX4BorUpo
+   NEXT_PUBLIC_FIREBASE_API_KEY = VOTRE_CLE_ICI
    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN = portfolio-5e8e4.firebaseapp.com
    NEXT_PUBLIC_FIREBASE_PROJECT_ID = portfolio-5e8e4
    NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET = portfolio-5e8e4.firebasestorage.app

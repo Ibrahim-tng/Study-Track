@@ -41,26 +41,43 @@ git push -u origin main
 **IMPORTANT : Dans l'interface Vercel, avant de déployer :**
 
 1. Section "Environment Variables"
-2. Ajoute ces 7 variables une par une :
+2. Ajoute ces variables une par une :
 
 ```
-NEXT_PUBLIC_FIREBASE_API_KEY = AIzaSyD5IJTvvYCizSSrBtPucdGLxFNX4BorUpo
+# Firebase Public
+NEXT_PUBLIC_FIREBASE_API_KEY = VOTRE_CLE_ICI
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN = portfolio-5e8e4.firebaseapp.com
 NEXT_PUBLIC_FIREBASE_PROJECT_ID = portfolio-5e8e4
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET = portfolio-5e8e4.firebasestorage.app
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID = 977845140288
 NEXT_PUBLIC_FIREBASE_APP_ID = 1:977845140288:web:e6fc2543ed3eeebfd1d8a5
 NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID = G-V3DDHH93S5
+
+# Firebase Admin (Secret)
 FIREBASE_CLIENT_EMAIL = firebase-adminsdk-fbsvc@portfolio-5e8e4.iam.gserviceaccount.com
 FIREBASE_PRIVATE_KEY = "la_clé_privée_totale_avec_les_guillemets"
+
+# Email (Secret)
+RESEND_API_KEY = re_QRYpW9zn_KNxMPAFL11UmEEc3QchE19hA
+
+# AI (Secret)
+GOOGLE_GENERATIVE_AI_API_KEY = VOTRE_CLE_ICI
+
+# Push Notifications (VAPID)
+VAPID_PRIVATE_KEY = 7FBoShDwHtyoqH_NmvCEtdWRtbT4FLwkmODmF9VqgWg
+NEXT_PUBLIC_VAPID_PUBLIC_KEY = BNgwGBzipjx5rtSqlUmF3p4bm8Bes7UAlPhkl6Se8jMe4JUjLYvf2x1PeCuSDvur7rgV_Men0cQoroBT_yQXKz8
+
+# App Settings
+NEXT_PUBLIC_APP_URL = https://ton-app.vercel.app
 ```
+
 
 > [!IMPORTANT]
 > **FIREBASE_PRIVATE_KEY** : Tu dois copier la clé complète incluant `-----BEGIN PRIVATE KEY-----` et `-----END PRIVATE KEY-----`. Sur Vercel, entoure la valeur de guillemets `"` pour préserver les retours à la ligne `\n`.
 
 3. Pour chaque variable :
    - Name : copie le nom (ex: `NEXT_PUBLIC_FIREBASE_API_KEY`)
-   - Value : copie la valeur (ex: `AIzaSyD5IJTvvYCizSSrBtPucdGLxFNX4BorUpo`)
+   - Value : copie la valeur (ex: `VOTRE_CLE_ICI`)
    - Coche "Production", "Preview", et "Development"
    - Clique "Add"
 
@@ -107,7 +124,7 @@ Suis les instructions :
 
 ```bash
 vercel env add NEXT_PUBLIC_FIREBASE_API_KEY
-# Colle la valeur : AIzaSyD5IJTvvYCizSSrBtPucdGLxFNX4BorUpo
+# Colle la valeur : VOTRE_CLE_ICI
 # Environnement : Production, Preview, Development
 
 # Répète pour chaque variable :

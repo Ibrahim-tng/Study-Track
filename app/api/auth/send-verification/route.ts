@@ -17,9 +17,15 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export async function POST(request: Request) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.error('RESEND_API_KEY is not defined in environment variables');
+    return NextResponse.json({ error: 'Email service configuration missing' }, { status: 500 });
+  }
+
+  const resend = new Resend(apiKey);
+
   // --- Rate Limiting ---
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
   if (!checkRateLimit(ip)) {
