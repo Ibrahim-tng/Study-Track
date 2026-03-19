@@ -656,7 +656,7 @@ export default function DashboardPage() {
 
       {showTaskModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-end md:items-center justify-center z-[70] md:p-4 transition-all duration-300">
-          <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] md:rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] w-full max-w-xl px-6 pt-6 pb-24 md:p-8 pb-safe max-h-[90vh] overflow-y-auto border-t md:border border-white/20 dark:border-slate-800 animate-slide-up md:animate-spring-in">
+          <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] md:rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] w-full max-w-xl px-6 pt-6 pb-40 md:p-8 pb-safe max-h-[90vh] overflow-y-auto border-t md:border border-white/20 dark:border-slate-800 animate-slide-up md:animate-spring-in">
             {/* Grabber handle for mobile */}
             <div className="w-16 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto mb-8 md:hidden"></div>
 
@@ -846,7 +846,7 @@ export default function DashboardPage() {
 
       {showSubjectModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-end md:items-center justify-center z-[70] md:p-4 transition-all duration-300">
-          <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] md:rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] w-full max-w-md px-6 pt-6 pb-24 md:p-8 pb-safe max-h-[90vh] overflow-y-auto border-t md:border border-white/20 dark:border-slate-800 animate-slide-up md:animate-spring-in">
+          <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] md:rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] w-full max-w-md px-6 pt-6 pb-40 md:p-8 pb-safe max-h-[90vh] overflow-y-auto border-t md:border border-white/20 dark:border-slate-800 animate-slide-up md:animate-spring-in">
             {/* Grabber handle for mobile */}
             <div className="w-16 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto mb-8 md:hidden"></div>
 

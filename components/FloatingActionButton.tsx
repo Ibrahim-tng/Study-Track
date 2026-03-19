@@ -22,7 +22,7 @@ export default function FloatingActionButton({
   return (
     <button
       onClick={onClick}
-      className={`fixed left-6 bottom-24 z-40 flex items-center justify-center w-16 h-16 bg-primary dark:bg-blue-500 text-white rounded-2xl shadow-lg hover:shadow-xl hover:bg-blue-600 active:scale-95 transition-all duration-300 md:hidden ${className}`}
+      className={`fixed left-6 bottom-32 z-40 flex items-center justify-center w-16 h-16 bg-primary dark:bg-blue-500 text-white rounded-2xl shadow-lg hover:shadow-xl hover:bg-blue-600 active:scale-95 transition-all duration-300 md:hidden ${className}`}
       aria-label={label}
     >
       {icon}

@@ -63,7 +63,7 @@ export default function RootLayout({
           <NotificationProvider>
             <ErrorBoundary>
               <Navbar />
-              <main className="min-h-[calc(100vh-4rem)] pb-28 md:pb-0 pb-safe">
+              <main className="min-h-[calc(100vh-4rem)] pb-40 md:pb-0 pb-safe">
                 <PageTransition>{children}</PageTransition>
               </main>
               <FloatAIChatbot />

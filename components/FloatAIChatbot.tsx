@@ -172,7 +172,7 @@ export default function FloatAIChatbot() {
       {/* Floating button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed z-50 flex items-center justify-center w-14 h-14 rounded-full shadow-2xl transition-all duration-300 active:scale-95 bottom-24 right-4 md:bottom-8 md:right-8
+        className={`fixed z-50 flex items-center justify-center w-14 h-14 rounded-full shadow-2xl transition-all duration-300 active:scale-95 bottom-32 right-4 md:bottom-8 md:right-8
           ${isOpen
             ? "bg-red-500 hover:bg-red-600 text-white"
             : "bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white"
