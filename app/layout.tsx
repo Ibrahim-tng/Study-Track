@@ -21,8 +21,9 @@ export const metadata: Metadata = {
   keywords: ["étudiant", "gestion", "tâches", "devoirs", "pomodoro", "productivité"],
   manifest: "/manifest.json",
   icons: {
-    icon: "/icon.png",
-    apple: "/icon.png",
+    icon: "/icon.png?v=1",
+    shortcut: "/icon.png?v=1",
+    apple: "/apple-icon.png?v=1",
   },
 };
 

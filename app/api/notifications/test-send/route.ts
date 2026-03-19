@@ -2,14 +2,34 @@ import { NextRequest, NextResponse } from "next/server";
 import webpush from "web-push";
 import { adminDb } from "@/lib/firebaseAdmin";
 
-// Configure web-push with VAPID keys
-webpush.setVapidDetails(
-  "mailto:example@yourdomain.com",
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-);
+// Simple configuration wrapper to prevent build crashes
+const configureWebPush = () => {
+  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const privateKey = process.env.VAPID_PRIVATE_KEY;
+
+  if (!publicKey || !privateKey) {
+    console.warn("Push Notifications non configurées (clés VAPID manquantes)");
+    return false;
+  }
+
+  try {
+    webpush.setVapidDetails(
+      "mailto:support@studytrack.app",
+      publicKey,
+      privateKey
+    );
+    return true;
+  } catch (err) {
+    console.error("Erreur configuration web-push:", err);
+    return false;
+  }
+};
 
 export async function POST(req: NextRequest) {
+  if (!configureWebPush()) {
+    return NextResponse.json({ error: "Push Notification configuration missing" }, { status: 503 });
+  }
+
   try {
     const { userId, title, body, url } = await req.json();
 
@@ -30,7 +50,7 @@ export async function POST(req: NextRequest) {
 
     const notifications = subscriptionsSnapshot.docs.map(async (doc) => {
       const subscription = doc.data() as webpush.PushSubscription;
-      
+
       try {
         await webpush.sendNotification(
           subscription,
