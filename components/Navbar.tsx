@@ -6,6 +6,7 @@ import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useRouter, usePathname } from "next/navigation";
 import { useTheme } from "@/context/ThemeContext";
+import { BookOpen, User, Moon, Sun, LogOut } from "lucide-react";
 
 export default function Navbar() {
   const { user } = useAuth();
@@ -25,10 +26,9 @@ export default function Navbar() {
   const isActive = (path: string) => pathname === path;
 
   const navLinkClass = (path: string) =>
-    `px-4 py-2 rounded-xl transition-all duration-300 font-bold ${
-      isActive(path)
-        ? "bg-primary-soft text-primary shadow-inner"
-        : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-primary dark:hover:text-primary-light"
+    `px-4 py-2 rounded-xl transition-all duration-300 font-bold ${isActive(path)
+      ? "bg-primary-soft text-primary shadow-inner"
+      : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-primary dark:hover:text-primary-light"
     }`;
 
   return (
@@ -39,7 +39,7 @@ export default function Navbar() {
           <div className="flex items-center">
             <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2 group">
               <div className="w-10 h-10 bg-gradient-premium rounded-xl flex items-center justify-center text-xl shadow-premium group-hover:scale-110 transition-transform">
-                📖
+                <BookOpen className="w-5 h-5 text-white" />
               </div>
               <span className="text-xl font-bold bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent hidden sm:block">
                 StudyTrack
@@ -69,19 +69,19 @@ export default function Navbar() {
                   className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-yellow-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all active:scale-95 shadow-sm"
                   title={theme === 'light' ? 'Activer mode sombre' : 'Activer mode clair'}
                 >
-                  {theme === 'light' ? '🌙' : '☀️'}
+                  {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
                 </button>
                 <Link href="/profile" className="p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
-                   <div className="w-9 h-9 bg-slate-200 dark:bg-slate-700 rounded-lg flex items-center justify-center text-lg">
-                     👤
-                   </div>
+                  <div className="w-9 h-9 bg-slate-200 dark:bg-slate-700 rounded-lg flex items-center justify-center text-lg">
+                    <User size={20} className="text-slate-600 dark:text-slate-300" />
+                  </div>
                 </Link>
                 <button
                   onClick={handleSignOut}
                   className="ml-2 text-slate-500 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400 p-2 transition-colors"
                   title="Déconnexion"
                 >
-                  🚪
+                  <LogOut size={18} />
                 </button>
               </>
             ) : user ? (
@@ -90,7 +90,7 @@ export default function Navbar() {
                   onClick={toggleTheme}
                   className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-yellow-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
                 >
-                  {theme === 'light' ? '🌙' : '☀️'}
+                  {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
                 </button>
                 <button
                   onClick={handleSignOut}
@@ -108,7 +108,7 @@ export default function Navbar() {
                   onClick={toggleTheme}
                   className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-yellow-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
                 >
-                  {theme === 'light' ? '🌙' : '☀️'}
+                  {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
                 </button>
                 <Link
                   href="/signup"
@@ -121,16 +121,16 @@ export default function Navbar() {
           </div>
 
           {/* Mobile Right Action Area */}
-          <div className="md:hidden flex items-center gap-2">
+          <div className="md:hidden flex items-center gap-3">
             <button
               onClick={toggleTheme}
-              className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-yellow-400 active:scale-95 transition-all shadow-sm"
+              className="w-11 h-11 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-yellow-400 active:scale-95 transition-all shadow-sm"
             >
-              {theme === 'light' ? '🌙' : '☀️'}
+              {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
             </button>
             {user && (
-              <Link href="/profile" className="w-10 h-10 bg-slate-200 dark:bg-slate-800 rounded-xl flex items-center justify-center text-lg active:scale-95 transition-all shadow-sm">
-                👤
+              <Link href="/profile" className="w-11 h-11 bg-slate-200 dark:bg-slate-800 rounded-xl flex items-center justify-center text-lg active:scale-95 transition-all shadow-sm">
+                <User size={22} className="text-slate-600 dark:text-slate-300" />
               </Link>
             )}
           </div>

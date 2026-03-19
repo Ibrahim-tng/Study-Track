@@ -38,12 +38,12 @@ export default function Home() {
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32">
           <div className="text-center">
-            <div className="inline-flex items-center gap-2 bg-primary/10 dark:bg-blue-400/10 text-primary dark:text-blue-400 px-4 py-2 rounded-full text-sm font-medium mb-6">
+            <div className="inline-flex items-center gap-2 bg-primary/10 dark:bg-blue-400/10 text-primary dark:text-blue-400 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[12px] sm:text-sm font-bold mb-6 animate-fade-in">
               ✨ L&apos;app #1 pour les étudiants organisés
             </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 dark:text-white mb-6 leading-tight">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 dark:text-white mb-6 leading-tight tracking-tight px-2">
               Organisez vos études avec{" "}
-              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent block sm:inline">
                 StudyTrack
               </span>
             </h1>

@@ -8,6 +8,7 @@ import {
   deleteGoal,
   completeGoal,
 } from "@/lib/firestore/goals";
+import { Target, Check, X, CheckCircle2 } from "lucide-react";
 
 interface StudyGoalsProps {
   userId: string;
@@ -89,8 +90,8 @@ export default function StudyGoals({ userId }: StudyGoalsProps) {
   return (
     <div className="clay-card animate-spring-in">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-          🎯 Objectifs d&apos;étude
+        <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+          <Target className="text-primary" /> Objectifs d&apos;étude
         </h3>
         <button
           onClick={() => setShowForm(!showForm)}
@@ -119,7 +120,7 @@ export default function StudyGoals({ userId }: StudyGoalsProps) {
                     period: e.target.value as any,
                   })
                 }
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500"
               >
                 <option value="daily">Quotidien</option>
                 <option value="weekly">Hebdomadaire</option>
@@ -141,7 +142,7 @@ export default function StudyGoals({ userId }: StudyGoalsProps) {
                     targetHours: parseInt(e.target.value),
                   })
                 }
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
@@ -169,24 +170,23 @@ export default function StudyGoals({ userId }: StudyGoalsProps) {
             const progress = getProgressPercentage(goal);
             const daysLeft = Math.ceil(
               (goal.endDate.toDate().getTime() - Date.now()) /
-                (1000 * 60 * 60 * 24)
+              (1000 * 60 * 60 * 24)
             );
 
             return (
               <div
                 key={goal.id}
-                className={`p-4 border-l-4 rounded-lg ${
-                  goal.completed
+                className={`p-4 border-l-4 rounded-lg ${goal.completed
                     ? "bg-green-500/10 dark:bg-green-900/20 border-l-green-500"
                     : "bg-indigo-500/5 dark:bg-slate-800/50 border-l-primary shadow-clay-sm"
-                }`}
+                  }`}
               >
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <h4 className="font-bold text-gray-900 dark:text-white">
                       Objectif {getPeriodLabel(goal.period)} :{" "}
                       <span className="text-blue-600 dark:text-blue-400">
-                        {goal.targetHours} heures
+                        {goal.targetHours}<span className="text-xs sm:text-sm ml-1">heures</span>
                       </span>
                     </h4>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -201,14 +201,14 @@ export default function StudyGoals({ userId }: StudyGoalsProps) {
                         onClick={() => handleCompleteGoal(goal.id)}
                         className="text-green-600 hover:text-green-700 font-semibold text-sm"
                       >
-                        ✓
+                        <Check size={18} />
                       </button>
                     )}
                     <button
                       onClick={() => handleDeleteGoal(goal.id)}
                       className="text-red-600 hover:text-red-700 font-semibold text-sm"
                     >
-                      ✕
+                      <X size={18} />
                     </button>
                   </div>
                 </div>
@@ -216,13 +216,12 @@ export default function StudyGoals({ userId }: StudyGoalsProps) {
                 {/* Progress Bar */}
                 <div className="w-full bg-gray-300 dark:bg-gray-600 rounded-full h-3 overflow-hidden">
                   <div
-                    className={`h-full transition-all ${
-                      progress >= 100
+                    className={`h-full transition-all ${progress >= 100
                         ? "bg-green-500"
                         : progress >= 50
                           ? "bg-blue-500"
                           : "bg-yellow-500"
-                    }`}
+                      }`}
                     style={{ width: `${progress}%` }}
                   ></div>
                 </div>
@@ -238,8 +237,8 @@ export default function StudyGoals({ userId }: StudyGoalsProps) {
                 </div>
 
                 {goal.completed && (
-                  <div className="mt-3 text-center text-green-600 dark:text-green-400 font-semibold">
-                    ✅ Objectif atteint !
+                  <div className="mt-3 text-center text-green-600 dark:text-green-400 font-semibold flex items-center justify-center gap-2">
+                    <CheckCircle2 size={16} /> Objectif atteint !
                   </div>
                 )}
               </div>

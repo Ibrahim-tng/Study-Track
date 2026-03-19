@@ -6,32 +6,7 @@ import { auth } from "@/lib/firebase";
 import { createUser } from "@/lib/firestore/users";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-
-// Validation helper functions
-const validateEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-};
-
-const validatePassword = (password: string): string | null => {
-  if (password.length < 8) {
-    return "Le mot de passe doit contenir au moins 8 caractères.";
-  }
-  if (!/[A-Z]/.test(password)) {
-    return "Le mot de passe doit contenir au moins une majuscule.";
-  }
-  if (!/[a-z]/.test(password)) {
-    return "Le mot de passe doit contenir au moins une minuscule.";
-  }
-  if (!/[0-9]/.test(password)) {
-    return "Le mot de passe doit contenir au moins un chiffre.";
-  }
-  return null;
-};
-
-const validateName = (name: string): boolean => {
-  return name.trim().length >= 2 && name.trim().length <= 100;
-};
+import { checkRateLimit, validateEmail, validatePassword, validateName } from "@/utils/security";
 
 export default function SignupPage() {
   const [name, setName] = useState("");
@@ -70,6 +45,14 @@ export default function SignupPage() {
     }
 
     setLoading(true);
+
+    // Rate limiting check
+    const rateLimit = await checkRateLimit(email, "signup");
+    if (!rateLimit.allowed) {
+      setError(rateLimit.message);
+      setLoading(false);
+      return;
+    }
 
     try {
       const userCredential = await createUserWithEmailAndPassword(
@@ -113,9 +96,9 @@ export default function SignupPage() {
   const passwordError = password ? validatePassword(password) : null;
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-8">
-      <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-8">
-        <h1 className="text-3xl font-bold text-center mb-2 text-gray-900 dark:text-white">Inscription</h1>
+    <div className="min-h-screen flex items-center justify-center px-4 py-10">
+      <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-clay-lg border border-white/50 dark:border-slate-700/50 p-6 sm:p-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2 text-gray-900 dark:text-white">Inscription</h1>
         <p className="text-gray-600 dark:text-gray-400 text-center mb-6">
           Créez votre compte StudyTrack
         </p>

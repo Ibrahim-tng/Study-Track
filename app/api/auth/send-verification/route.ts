@@ -62,13 +62,13 @@ export async function POST(request: Request) {
       url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard`,
       handleCodeInApp: true,
     };
-    
+
     // Generate a simple link that goes to the Firebase handler
     const verificationLink = await admin.auth().generateEmailVerificationLink(email, actionCodeSettings);
 
     // 2. Send the custom email using Resend
-    const data = await resend.emails.send({
-      from: 'StudyTrack <onboarding@resend.dev>', // Replace with your verified domain when in production
+    const { data, error } = await resend.emails.send({
+      from: 'StudyTrack <no-reply@study-track.site>', // IMPORTANT: Replace @studytrack.app with your verified domain in Resend
       to: email,
       subject: 'Vérifiez votre adresse email - StudyTrack',
       html: `
@@ -95,7 +95,14 @@ export async function POST(request: Request) {
           </p>
         </div>
       `,
+    }, {
+      idempotencyKey: `verify-email/${email}-${Date.now()}`,
     });
+
+    if (error) {
+      console.error('Resend Error:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     return NextResponse.json({ success: true, data });
   } catch (error: any) {

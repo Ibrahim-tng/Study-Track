@@ -12,6 +12,16 @@ import {
   updateEmail,
 } from "firebase/auth";
 import { db } from "@/lib/firebase";
+import PushNotificationManager from "@/components/PushNotificationManager";
+import {
+  User as UserIcon,
+  Lock,
+  AlertTriangle,
+  Mail,
+  Key,
+  Trash2,
+  ChevronRight
+} from "lucide-react";
 import {
   collection,
   query,
@@ -224,11 +234,10 @@ export default function ProfilePage() {
           {/* Message de notification */}
           {message && (
             <div
-              className={`mb-6 p-4 rounded-lg border-l-4 ${
-                messageType === "success"
+              className={`mb-6 p-4 rounded-lg border-l-4 ${messageType === "success"
                   ? "bg-green-50 dark:bg-green-900/20 border-green-500 text-green-800 dark:text-green-200"
                   : "bg-red-50 dark:bg-red-900/20 border-red-500 text-red-800 dark:text-red-200"
-              }`}
+                }`}
             >
               {messageType === "success" ? "✓" : "✕"} {message}
             </div>
@@ -238,8 +247,8 @@ export default function ProfilePage() {
           <div className="grid grid-cols-1 gap-6">
             {/* Section Informations */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
-              <div className="flex items-center gap-2 mb-6">
-                <span className="text-2xl">👤</span>
+              <div className="flex items-center gap-2 mb-6 text-indigo-500">
+                <UserIcon size={24} />
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                   Account Information
                 </h2>
@@ -267,20 +276,24 @@ export default function ProfilePage() {
                   <p className="text-gray-900 dark:text-white">
                     {user?.metadata.creationTime
                       ? new Date(user.metadata.creationTime).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })
                       : "N/A"}
                   </p>
                 </div>
               </div>
             </div>
 
+            {/* Section Notifications Push */}
+            <PushNotificationManager />
+
+
             {/* Section Seguridad */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
-              <div className="flex items-center gap-2 mb-6">
-                <span className="text-2xl">🔒</span>
+              <div className="flex items-center gap-2 mb-6 text-indigo-500">
+                <Lock size={24} />
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                   Security
                 </h2>
@@ -292,10 +305,10 @@ export default function ProfilePage() {
                   className="w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-medium transition flex items-center justify-between group"
                 >
                   <span className="flex items-center gap-2">
-                    <span>🔑</span>
+                    <Key size={18} />
                     Change Password
                   </span>
-                  <span className="text-xl group-hover:translate-x-1 transition">→</span>
+                  <ChevronRight className="group-hover:translate-x-1 transition" size={20} />
                 </button>
 
                 <button
@@ -303,19 +316,19 @@ export default function ProfilePage() {
                   className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg font-medium transition flex items-center justify-between group"
                 >
                   <span className="flex items-center gap-2">
-                    <span>📧</span>
+                    <Mail size={18} />
                     Change Email
                   </span>
-                  <span className="text-xl group-hover:translate-x-1 transition">→</span>
+                  <ChevronRight className="group-hover:translate-x-1 transition" size={20} />
                 </button>
               </div>
             </div>
 
             {/* Section Peligro */}
             <div className="bg-red-50 dark:bg-red-900/10 rounded-xl shadow-sm p-6 border border-red-200 dark:border-red-900/30">
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-2xl">⚠️</span>
-                <h2 className="text-xl font-bold text-red-800 dark:text-red-400">
+              <div className="flex items-center gap-2 mb-4 text-red-600 dark:text-red-400">
+                <AlertTriangle size={24} />
+                <h2 className="text-xl font-bold">
                   Danger Zone
                 </h2>
               </div>
@@ -328,7 +341,7 @@ export default function ProfilePage() {
                 onClick={() => setActiveModal("delete")}
                 className="w-full px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition flex items-center justify-center gap-2"
               >
-                <span>🗑️</span>
+                <Trash2 size={18} />
                 Delete Account
               </button>
             </div>
@@ -361,11 +374,10 @@ export default function ProfilePage() {
                         currentPassword: e.target.value,
                       })
                     }
-                    className={`w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${
-                      passwordErrors.currentPassword
+                    className={`w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${passwordErrors.currentPassword
                         ? "border-red-500 dark:border-red-500"
                         : "border-gray-300"
-                    }`}
+                      }`}
                     placeholder="••••••••"
                   />
                   {passwordErrors.currentPassword && (
@@ -389,11 +401,10 @@ export default function ProfilePage() {
                         newPassword: e.target.value,
                       })
                     }
-                    className={`w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${
-                      passwordErrors.newPassword
+                    className={`w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${passwordErrors.newPassword
                         ? "border-red-500 dark:border-red-500"
                         : "border-gray-300"
-                    }`}
+                      }`}
                     placeholder="••••••••"
                   />
                   {passwordErrors.newPassword && (
@@ -417,11 +428,10 @@ export default function ProfilePage() {
                         confirmPassword: e.target.value,
                       })
                     }
-                    className={`w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${
-                      passwordErrors.confirmPassword
+                    className={`w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${passwordErrors.confirmPassword
                         ? "border-red-500 dark:border-red-500"
                         : "border-gray-300"
-                    }`}
+                      }`}
                     placeholder="••••••••"
                   />
                   {passwordErrors.confirmPassword && (

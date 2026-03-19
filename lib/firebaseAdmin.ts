@@ -1,5 +1,6 @@
 import { initializeApp, getApps, cert } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
+import { getFirestore } from "firebase-admin/firestore";
 
 /**
  * Initialise Firebase Admin SDK (singleton pattern — safe for serverless cold starts)
@@ -35,3 +36,7 @@ export async function verifyFirebaseToken(authHeader: string | null): Promise<st
   const decoded = await adminAuth.verifyIdToken(idToken);
   return decoded.uid;
 }
+
+export const adminDb = getFirestore(getAdminApp());
+export const adminAuth = getAuth(getAdminApp());
+

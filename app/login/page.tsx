@@ -1,37 +1,29 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
+import { useState } from "react";
+import { signInWithEmailAndPassword, sendPasswordResetEmail, sendSignInLinkToEmail } from "firebase/auth";
+
 import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { validateEmail, checkRateLimit, clearRateLimit } from "@/utils/security";
+import { validateEmail, checkRateLimit } from "@/utils/security";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [remainingAttempts, setRemainingAttempts] = useState(5);
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetMessage, setResetMessage] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
+  const [isEmailLinkSent, setIsEmailLinkSent] = useState(false);
+
+  const [emailLinkLoading, setEmailLinkLoading] = useState(false);
+
+
   const router = useRouter();
 
-  // Check if user is rate limited
-  useEffect(() => {
-    const attemptKey = `ratelimit_login_${email}`;
-    const storedData = localStorage.getItem(attemptKey);
-    if (storedData) {
-      try {
-        const data = JSON.parse(storedData);
-        setRemainingAttempts(Math.max(0, 5 - data.attempts));
-      } catch (e) {
-        // Ignore parse errors
-      }
-    }
-  }, [email]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,9 +41,11 @@ export default function LoginPage() {
     }
 
     // Rate limiting check
-    const rateLimit = checkRateLimit(`login_${email}`, 5, 15 * 60 * 1000);
+    setLoading(true);
+    const rateLimit = await checkRateLimit(email, "login");
     if (!rateLimit.allowed) {
       setError(rateLimit.message);
+      setLoading(false);
       return;
     }
 
@@ -59,10 +53,9 @@ export default function LoginPage() {
 
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password);
-      
-      // Clear rate limit on successful login
-      clearRateLimit(`login_${email}`);
-      
+
+      // Rate limit cleared on server success
+
       router.push("/dashboard");
     } catch (error: any) {
       console.error("Erreur lors de la connexion:", error);
@@ -83,28 +76,45 @@ export default function LoginPage() {
       }
 
       setError(errorMessage);
-      
-      // Update remaining attempts display
-      const newRateLimit = checkRateLimit(`login_${email}`, 5, 15 * 60 * 1000);
-      if (!newRateLimit.allowed) {
-        setError(newRateLimit.message);
-        setRemainingAttempts(0);
-      } else {
-        const storedData = localStorage.getItem(`ratelimit_login_${email}`);
-        if (storedData) {
-          try {
-            const data = JSON.parse(storedData);
-            setRemainingAttempts(Math.max(0, 5 - data.attempts));
-          } catch (e) {
-            // Ignore
-          }
-        }
-      }
+
+      setLoading(false);
       setLoading(false);
     }
   };
 
+  const handleEmailLinkSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetMessage("");
+
+
+    if (!validateEmail(email)) {
+      setError("Veuillez entrer une adresse email valide.");
+      return;
+    }
+
+    setEmailLinkLoading(true);
+
+    const actionCodeSettings = {
+      url: `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/auth/verify-link`,
+      handleCodeInApp: true,
+    };
+
+    try {
+      await sendSignInLinkToEmail(auth, email.trim(), actionCodeSettings);
+      window.localStorage.setItem('emailForSignIn', email.trim());
+      setIsEmailLinkSent(true);
+      setResetMessage("✅ Un lien de connexion a été envoyé à votre adresse email !");
+    } catch (error: any) {
+      console.error("Erreur lors de l'envoi du lien:", error);
+      setError("Une erreur est survenue lors de l'envoi du lien. Veuillez réessayer.");
+    } finally {
+      setEmailLinkLoading(false);
+    }
+
+  };
+
   const handlePasswordReset = async (e: React.FormEvent) => {
+
     e.preventDefault();
     setResetMessage("");
 
@@ -131,9 +141,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-8">
-        <h1 className="text-3xl font-bold text-center mb-2 text-gray-900 dark:text-white">Connexion</h1>
+    <div className="min-h-screen flex items-center justify-center px-4 py-10">
+      <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-clay-lg border border-white/50 dark:border-slate-700/50 p-6 sm:p-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2 text-gray-900 dark:text-white">Connexion</h1>
         <p className="text-gray-600 dark:text-gray-400 text-center mb-6">
           Connectez-vous à votre compte StudyTrack
         </p>
@@ -144,11 +154,6 @@ export default function LoginPage() {
           </div>
         )}
 
-        {remainingAttempts > 0 && remainingAttempts <= 3 && !error && (
-          <div className="bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-400 dark:border-yellow-800 text-yellow-700 dark:text-yellow-300 px-4 py-3 rounded-lg mb-4 text-sm">
-            Attention: {remainingAttempts} tentative(s) restante(s)
-          </div>
-        )}
 
         <form onSubmit={handleLogin} className="space-y-4" noValidate>
           <div>
@@ -161,7 +166,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value.trim())}
               required
-              disabled={remainingAttempts === 0}
+              disabled={loading}
               className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 ${email && !validateEmail(email) ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
               placeholder="jean@exemple.com"
             />
@@ -182,7 +187,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              disabled={remainingAttempts === 0}
+              disabled={loading}
               className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 ${password && password.length < 6 ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
               placeholder="••••••••"
             />
@@ -195,12 +200,41 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || emailLinkLoading}
             className="w-full bg-primary text-white py-3 rounded-lg font-medium hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "Connexion..." : "Se connecter"}
+            {loading ? "Connexion..." : "Se connecter avec mot de passe"}
+          </button>
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">ou</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleEmailLinkSignIn}
+            disabled={loading || emailLinkLoading}
+            className="w-full bg-white dark:bg-gray-700 text-primary dark:text-blue-400 border border-primary dark:border-blue-400 py-3 rounded-lg font-medium hover:bg-blue-50 dark:hover:bg-gray-600 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {emailLinkLoading ? "Envoi du lien..." : (
+              <>
+                <span>📧</span> Se connecter via lien email
+              </>
+            )}
           </button>
         </form>
+
+        {isEmailLinkSent && (
+          <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl text-blue-700 dark:text-blue-300 text-sm animate-pulse">
+            {resetMessage}
+          </div>
+        )}
+
 
         <div className="mt-6 space-y-3 text-sm text-center">
           <p className="text-gray-600 dark:text-gray-400">
@@ -240,11 +274,10 @@ export default function LoginPage() {
             </p>
 
             {resetMessage && (
-              <div className={`mb-4 p-3 rounded-lg text-sm ${
-                resetMessage.includes("✅")
-                  ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
-                  : "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
-              }`}>
+              <div className={`mb-4 p-3 rounded-lg text-sm ${resetMessage.includes("✅")
+                ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
+                : "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
+                }`}>
                 {resetMessage}
               </div>
             )}

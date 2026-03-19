@@ -1,7 +1,7 @@
 interface StatCardProps {
   title: string;
   value: string | number;
-  icon?: string;
+  icon?: React.ReactNode;
   color: "green" | "yellow" | "red" | "blue";
 }
 
@@ -17,16 +17,16 @@ export default function StatCard({ title, value, icon, color }: StatCardProps) {
   };
 
   return (
-    <div className="card-premium group hover:scale-[1.02] active:scale-[0.98]">
+    <div className="card-premium !p-4 sm:!p-6 group hover:scale-[1.02] active:scale-[0.98]">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">{title}</p>
-          <p className="text-3xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight">
+          <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 leading-tight">{title}</p>
+          <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight">
             {value}
           </p>
         </div>
         {icon && (
-          <div className={`w-14 h-14 bg-gradient-to-br ${colorGradients[color]} rounded-2xl flex items-center justify-center text-3xl shadow-clay-btn transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300`}>
+          <div className={`w-10 h-10 sm:w-14 sm:h-14 bg-gradient-to-br ${colorGradients[color]} rounded-xl sm:rounded-2xl flex items-center justify-center text-xl sm:text-3xl shadow-clay-btn transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300`}>
             {icon}
           </div>
         )}

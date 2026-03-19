@@ -2,6 +2,16 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  X,
+  ChevronDown,
+  Sparkles,
+  Clock,
+  Moon,
+  Brain,
+  Send,
+  Bot
+} from "lucide-react";
 
 interface ChatMessage {
   id: string;
@@ -123,7 +133,7 @@ export default function FloatAIChatbot() {
 
       // If response was ok but content is empty, show a fallback
       if (!fullContent.trim()) {
-        fullContent = "⚠️ Réponse vide reçue. Réessaie ta question.";
+        fullContent = "Réponse vide reçue. Réessaie ta question.";
       }
 
       // Ensure final content is set
@@ -139,9 +149,9 @@ export default function FloatAIChatbot() {
         prev.map((m) =>
           m.id === assistantMsgId
             ? {
-                ...m,
-                content: `❌ Une erreur est survenue : ${msg}\n\nVérifie ta connexion et réessaie.`,
-              }
+              ...m,
+              content: `Une erreur est survenue : ${msg}\n\nVérifie ta connexion et réessaie.`,
+            }
             : m
         )
       );
@@ -170,15 +180,7 @@ export default function FloatAIChatbot() {
         aria-label={isOpen ? "Fermer le chat IA" : "Ouvrir le coach IA"}
         title={isOpen ? "Fermer" : "Coach IA StudyTrack"}
       >
-        {isOpen ? (
-          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        ) : (
-          <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-        )}
+        {isOpen ? <X size={24} /> : <Bot size={24} />}
       </button>
 
       {/* Chat Window */}
@@ -194,7 +196,7 @@ export default function FloatAIChatbot() {
           <div className="absolute bottom-0 right-0 left-0 md:static bg-white dark:bg-gray-800 rounded-t-[2rem] md:rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col h-[520px] max-h-[75vh] md:max-h-[65vh]">
             {/* Header */}
             <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-4 text-white flex items-center gap-3 shrink-0">
-              <span className="text-2xl">⚡</span>
+              <Bot className="text-white" size={24} />
               <div className="flex-1">
                 <h3 className="font-bold leading-tight">Coach StudyTrack</h3>
                 <p className="text-xs text-indigo-100">Assistant IA • En ligne</p>
@@ -214,9 +216,7 @@ export default function FloatAIChatbot() {
                 className="text-white/80 hover:text-white transition ml-1"
                 aria-label="Fermer"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+                <ChevronDown size={20} />
               </button>
             </div>
 
@@ -224,7 +224,7 @@ export default function FloatAIChatbot() {
             <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50 dark:bg-gray-900">
               {messages.length === 0 ? (
                 <div className="text-center text-gray-500 dark:text-gray-400 mt-6 space-y-3">
-                  <div className="text-5xl mb-3">👋</div>
+                  <div className="text-5xl mb-3 flex justify-center"><Sparkles className="text-yellow-400" size={48} /></div>
                   <p className="font-semibold text-gray-700 dark:text-gray-300">
                     Bonjour {user.displayName?.split(" ")[0] || "là"} !
                   </p>
@@ -234,19 +234,19 @@ export default function FloatAIChatbot() {
                       onClick={() => fillSuggest("Comment utiliser la technique Pomodoro ?")}
                       className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-2 rounded-xl text-sm text-left hover:bg-indigo-50 dark:hover:bg-gray-700 transition"
                     >
-                      🍅 Comment utiliser Pomodoro ?
+                      <Clock size={16} className="inline mr-2" /> Comment utiliser Pomodoro ?
                     </button>
                     <button
                       onClick={() => fillSuggest("Je n'arrive pas à me motiver pour réviser. Aide-moi.")}
                       className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-2 rounded-xl text-sm text-left hover:bg-indigo-50 dark:hover:bg-gray-700 transition"
                     >
-                      😴 Je manque de motivation...
+                      <Moon size={16} className="inline mr-2" /> Je manque de motivation...
                     </button>
                     <button
                       onClick={() => fillSuggest("Comment mieux mémoriser mon cours ?")}
                       className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-2 rounded-xl text-sm text-left hover:bg-indigo-50 dark:hover:bg-gray-700 transition"
                     >
-                      🧠 Comment mieux mémoriser ?
+                      <Brain size={16} className="inline mr-2" /> Comment mieux mémoriser ?
                     </button>
                   </div>
                 </div>
@@ -255,15 +255,14 @@ export default function FloatAIChatbot() {
                   <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                     {m.role === "assistant" && (
                       <div className="w-6 h-6 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs mr-2 mt-1 shrink-0">
-                        ⚡
+                        <Bot size={12} />
                       </div>
                     )}
                     <div
-                      className={`max-w-[82%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-                        m.role === "user"
-                          ? "bg-indigo-500 text-white rounded-br-sm"
-                          : "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-sm border border-gray-200 dark:border-gray-700 shadow-sm"
-                      }`}
+                      className={`max-w-[82%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${m.role === "user"
+                        ? "bg-indigo-500 text-white rounded-br-sm"
+                        : "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-sm border border-gray-200 dark:border-gray-700 shadow-sm"
+                        }`}
                     >
                       {m.content === "" && m.role === "assistant" ? (
                         <div className="flex items-center gap-1 py-1">
@@ -289,7 +288,7 @@ export default function FloatAIChatbot() {
             </div>
 
             {/* Input */}
-            <div className="p-3 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shrink-0">
+            <div className="p-3 pb-safe bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shrink-0">
               <form onSubmit={handleSubmit} className="flex gap-2 items-center">
                 <input
                   type="text"
@@ -306,9 +305,7 @@ export default function FloatAIChatbot() {
                   className="w-9 h-9 flex items-center justify-center bg-indigo-500 hover:bg-indigo-600 text-white rounded-full disabled:opacity-40 transition shrink-0"
                   aria-label="Envoyer"
                 >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                  </svg>
+                  <Send size={18} />
                 </button>
               </form>
               <div className="flex justify-between items-center mt-1 px-1">

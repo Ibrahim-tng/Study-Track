@@ -42,63 +42,50 @@ export const validateName = (name: string): boolean => {
  * Sanitize user input (XSS prevention)
  */
 export const sanitizeInput = (input: string): string => {
+  if (!input) return "";
   return input
     .trim()
-    .replace(/[<>]/g, "")
-    .slice(0, 1000); // Limit length
+    .replace(/[&<>"']/g, (match) => {
+      const map: Record<string, string> = {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      };
+      return map[match];
+    })
+    .slice(0, 2000);
 };
 
 /**
  * Rate limiting helper
- * Stores login attempts in localStorage
+ * Calls the server-side API for robust rate limiting
  */
-export const checkRateLimit = (
-  key: string,
-  maxAttempts: number = 5,
-  windowMs: number = 15 * 60 * 1000 // 15 minutes
-): { allowed: boolean; message: string } => {
-  const now = Date.now();
-  const attemptKey = `ratelimit_${key}`;
-
+export const checkRateLimit = async (
+  identifier: string,
+  type: "login" | "signup" | "default" = "default"
+): Promise<{ allowed: boolean; message: string }> => {
   try {
-    const storedData = localStorage.getItem(attemptKey);
-    const data = storedData ? JSON.parse(storedData) : { attempts: 0, resetTime: now + windowMs };
+    const response = await fetch("/api/auth/rate-limit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ identifier, type }),
+    });
 
-    if (now > data.resetTime) {
-      // Reset window
-      localStorage.setItem(
-        attemptKey,
-        JSON.stringify({ attempts: 1, resetTime: now + windowMs })
-      );
-      return { allowed: true, message: "" };
+    if (!response.ok) {
+      if (response.status === 429) {
+        const data = await response.json();
+        return { allowed: false, message: data.message };
+      }
+      return { allowed: true, message: "" }; // Fail open
     }
 
-    if (data.attempts >= maxAttempts) {
-      const remainingMs = data.resetTime - now;
-      const remainingMinutes = Math.ceil(remainingMs / 1000 / 60);
-      return {
-        allowed: false,
-        message: `Trop de tentatives. Réessayez dans ${remainingMinutes} minute(s).`,
-      };
-    }
-
-    // Increment attempts
-    data.attempts += 1;
-    localStorage.setItem(attemptKey, JSON.stringify(data));
-    return { allowed: true, message: "" };
+    const data = await response.json();
+    return data;
   } catch (error) {
     console.error("Rate limit check error:", error);
-    return { allowed: true, message: "" }; // Allow on error
+    return { allowed: true, message: "" }; // Fail open on network error
   }
 };
 
-/**
- * Clear rate limit for a key
- */
-export const clearRateLimit = (key: string): void => {
-  try {
-    localStorage.removeItem(`ratelimit_${key}`);
-  } catch (error) {
-    console.error("Clear rate limit error:", error);
-  }
-};

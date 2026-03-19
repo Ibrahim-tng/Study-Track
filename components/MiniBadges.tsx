@@ -2,6 +2,7 @@
 
 import { BadgeId, BADGES } from '@/types/badges';
 import Link from 'next/link';
+import { Trophy, ArrowRight } from 'lucide-react';
 
 interface MiniBadgesProps {
   unlockedBadges: BadgeId[];
@@ -15,13 +16,13 @@ export default function MiniBadges({ unlockedBadges, limit = 4 }: MiniBadgesProp
     <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-          Récents Badges 🏆
+          Récents Badges <Trophy size={20} className="inline-block text-yellow-500 ml-1" />
         </h3>
         <Link
           href="/badges"
           className="text-sm text-primary dark:text-blue-400 hover:underline"
         >
-          Voir tous
+          Voir tous <ArrowRight size={14} className="inline-block ml-1" />
         </Link>
       </div>
 

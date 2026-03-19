@@ -36,7 +36,7 @@ export default function BadgesPage() {
             🏆 Badges et Récompenses
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Unlock badges by achieving objectives
+            Débloquez des badges en atteignant vos objectifs
           </p>
         </div>
 
